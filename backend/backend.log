@@ -1,0 +1,203 @@
+WARNING: Failed to connect to MQTT broker (localhost:1883). Running without MQTT support: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:60046 - "GET /api/lockers HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/led: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:56152 - "POST /api/reserve?locker_id=1&hours=1&phone=0999999999 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56998 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57002 - "POST /api/upload-face/18 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57004 - "GET /api/lockers HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/led: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:57010 - "POST /api/cancel-reservation?rental_id=18 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57061 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64686 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55136 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55136 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55136 - "POST /api/reserve?locker_id=1&hours=2&phone= HTTP/1.1" 400 Bad Request
+WARNING: MQTT publish failed for locker/1/led: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:57333 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64940 - "POST /api/reserve?locker_id=1&hours=2&phone=0985332250 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64940 - "POST /api/upload-face/19 HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/led: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:55694 - "GET /api/lockers HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/open: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:64940 - "POST /api/payment/callback?rental_id=19 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64940 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64940 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53214 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53214 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63855 - "OPTIONS /api/customer/verify-otp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63855 - "POST /api/customer/verify-otp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63855 - "OPTIONS /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63855 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60507 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60507 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60507 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52477 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54939 - "OPTIONS /api/customer/extend HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/led: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:54939 - "POST /api/customer/extend HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53009 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54939 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64824 - "OPTIONS /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62528 - "OPTIONS /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51667 - "OPTIONS /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53027 - "OPTIONS /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54653 - "OPTIONS /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56243 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64824 - "OPTIONS /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62528 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56243 - "GET /api/admin/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64824 - "GET /api/admin/rentals HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54653 - "GET /api/admin/logs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:56243 - "GET /api/admin/stats HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:64824 - "GET /api/admin/rentals HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54653 - "GET /api/admin/logs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:54653 - "OPTIONS /api/admin/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54653 - "POST /api/admin/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56243 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62528 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64824 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54653 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56243 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62528 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53027 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64824 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65459 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65459 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51058 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51183 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63485 - "OPTIONS /api/customer/return HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/open: [WinError 10061] No connection could be made because the target machine actively refused it
+WARNING: MQTT publish failed for locker/1/led: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:63485 - "POST /api/customer/return HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50454 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63485 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53532 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53532 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53532 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56923 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53532 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59090 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59090 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53532 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56923 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59090 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59990 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56071 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62021 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56071 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62021 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56071 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59990 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56071 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56071 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59990 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59990 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56071 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65079 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65079 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65079 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49392 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57848 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57848 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57848 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57848 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57848 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57848 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57848 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57848 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59233 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59233 - "GET /api/customer/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57444 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53824 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49667 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54571 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52938 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49667 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54571 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52938 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56385 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52938 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52938 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49667 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54571 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56385 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58884 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59105 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59105 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58413 - "OPTIONS /api/customer/verify-otp HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58413 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58413 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58413 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58413 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58413 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58413 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58413 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58413 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49666 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49666 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:49666 - "POST /api/customer/verify-otp HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:61593 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61593 - "GET /api/lockers HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/led: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:61593 - "POST /api/reserve?locker_id=1&hours=2&phone=0985332250 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53026 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53026 - "POST /api/upload-face/20 HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/led: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:65533 - "GET /api/lockers HTTP/1.1" 200 OK
+WARNING: MQTT publish failed for locker/1/open: [WinError 10061] No connection could be made because the target machine actively refused it
+INFO:     127.0.0.1:53026 - "POST /api/payment/callback?rental_id=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53026 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53026 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53026 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53026 - "POST /api/identify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56156 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56156 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56156 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56156 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56156 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49294 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49294 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57101 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58250 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62735 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62735 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54530 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54530 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54530 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55279 - "OPTIONS /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62857 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57934 - "OPTIONS /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57409 - "OPTIONS /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55511 - "OPTIONS /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62857 - "OPTIONS /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "OPTIONS /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57934 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55511 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57409 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57934 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55511 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55511 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57409 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57934 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55511 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62857 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57409 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57934 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57934 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57409 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57409 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62857 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57934 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55511 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57409 - "GET /api/admin/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "GET /api/admin/stats HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62857 - "GET /api/admin/rentals HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62857 - "GET /api/lockers HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64255 - "GET /api/lockers HTTP/1.1" 200 OK

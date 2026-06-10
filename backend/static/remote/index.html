@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Tra cứu tủ từ xa</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>📱 Tra cứu tủ</h1>
+    <button id="check-btn">Quét mặt để kiểm tra</button>
+    <div id="camera-modal" class="modal">
+      <video id="video" autoplay playsinline></video>
+      <button id="capture-btn">📸 Chụp</button>
+      <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+    <div id="result"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

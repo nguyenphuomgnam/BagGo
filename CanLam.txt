@@ -1,0 +1,33 @@
+-  client : 
++ Thêm  bản  đồ (  các chạm ) + các  tủ 
++  check  điều kiện quá giờ thì  thanh toán tiền trước khi khi  mới đc mở tủ 
++ thêm box đặt trước :  đặt  trước  2 tiếng ( nếu chx  mở tủ đó  giữ chỗ  max 15p ) 
++  Hiện  thị  tick  chính sách !
+
+
+- Kios :  Quảng  cáo  chèn (  admin  chèn quyền ưu tiên ) 
++  color  tủ  trống  
++  color tủ có người  
++  color tủ đang được  thuê  
++  Hiện  thị  tick  chính sách !
+- Admin :
++   phần  hiển  thị  + thêm  tủ  bớt tủ +  giá tiền +  tgian 
++  nắm đc  oder đặt  hàng
++ cảnh báo quá  giờ (  tủ nài  chạm  nào )
+
++  Tủ trong ->  CHạm  ( mục  tiêu  dùng để  hiện  thị  bản đồ)
++  chèn quảng  có 
++ lịch sử thống kê +  sơ  đồ 
++  Thông báo  quá hạn 
++  Thanh toán :  Quy  trình  rõ  ràng 
++ cập nhật chính sách +  quy  định 
+
+
+-  backgroup  : 
++  xanh  lá cây
++ trắng đen 
+==>  Môi trường  xanh
+
+
+
+font  chữ :  mona sans ,   inter 

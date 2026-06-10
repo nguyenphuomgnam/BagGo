@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Omni Locker - Kiosk</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🔒 Omni Locker</h1>
+    <div id="locker-grid"></div>
+    <div id="action-buttons">
+      <button id="btn-rent" style="display:none;" onclick="startRent()">Thuê tủ</button>
+      <button id="btn-return" style="display:none;" onclick="startReturn()">Trả tủ</button>
+    </div>
+    <div id="camera-modal" class="modal">
+      <video id="video" autoplay playsinline></video>
+      <button id="capture-btn">📸 Chụp ảnh</button>
+      <canvas id="canvas" style="display:none;"></canvas>
+    </div>
+    <div id="status-message"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
