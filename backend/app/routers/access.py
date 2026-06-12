@@ -159,7 +159,7 @@ def get_public_config():
 
 
 @router.post("/reserve")
-def reserve_locker(locker_id: int = 1, hours: int = 2, phone: str = None):
+def reserve_locker(locker_id: int = 1, hours: int = 2, phone: str = None, start_time: str = None):
     expire_pending_reservations()
     sync_overtime_sessions()
     settings = get_app_settings()
@@ -177,8 +177,28 @@ def reserve_locker(locker_id: int = 1, hours: int = 2, phone: str = None):
         conn.close()
         raise HTTPException(400, "Ngăn không khả dụng")
 
-    start_time = datetime.datetime.now()
-    end_time = start_time + datetime.timedelta(hours=hours)
+    now = datetime.datetime.now()
+    if start_time:
+        try:
+            cleaned_start = start_time.replace("Z", "")
+            if "+" in cleaned_start:
+                cleaned_start = cleaned_start.split("+")[0]
+            rental_start = datetime.datetime.fromisoformat(cleaned_start)
+        except ValueError:
+            conn.close()
+            raise HTTPException(400, "Định dạng thời gian đặt trước không hợp lệ")
+
+        if rental_start < now - datetime.timedelta(minutes=5):
+            conn.close()
+            raise HTTPException(400, "Thời gian đặt trước không được ở quá khứ")
+
+        if rental_start > now + datetime.timedelta(hours=2):
+            conn.close()
+            raise HTTPException(400, "Chỉ được đặt trước tối đa 2 tiếng")
+    else:
+        rental_start = now
+
+    rental_end = rental_start + datetime.timedelta(hours=hours)
     access_code = generate_access_code()
     otp = dev_otp_code()
     price = calculate_base_price(hours, settings)
@@ -188,14 +208,14 @@ def reserve_locker(locker_id: int = 1, hours: int = 2, phone: str = None):
             locker_id, start_time, end_time, status, price, phone, access_code, otp_code, payment_status
         ) VALUES (?, ?, ?, 'RESERVED', ?, ?, ?, ?, 'PENDING')
         """,
-        (locker_id, start_time, end_time, price, normalized_phone, access_code, otp),
+        (locker_id, rental_start, rental_end, price, normalized_phone, access_code, otp),
     )
     rental_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
     conn.commit()
     conn.close()
 
     update_locker_status(locker_id, "RESERVED")
-    log_action(locker_id, "customer", "RESERVE", f"Giữ chỗ phiên #{rental_id} trong {hours} giờ")
+    log_action(locker_id, "customer", "RESERVE", f"Giữ chỗ phiên #{rental_id} từ {rental_start} trong {hours} giờ")
     return {
         "rental_id": rental_id,
         "locker_id": locker_id,
@@ -461,7 +481,23 @@ def customer_extend(
         """,
         (payload.rental_id,),
     ).fetchone()
-    conn.close()
     update_locker_status(rental["locker_id"], "OCCUPIED")
     log_action(rental["locker_id"], "customer", "EXTEND", f"Gia hạn phiên #{payload.rental_id} thêm {payload.hours} giờ")
     return rental_to_dict(row)
+
+
+@router.get("/stations")
+def get_stations():
+    conn = get_db()
+    rows = conn.execute(
+        """
+        SELECT
+            s.*,
+            (SELECT COUNT(*) FROM lockers WHERE station_name = s.name AND COALESCE(is_active, 1) = 1) AS total_lockers,
+            (SELECT COUNT(*) FROM lockers WHERE station_name = s.name AND status = 'AVAILABLE' AND COALESCE(is_active, 1) = 1) AS available_lockers
+        FROM stations s
+        ORDER BY s.name
+        """
+    ).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]

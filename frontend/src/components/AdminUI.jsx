@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { api, subscribeWs } from '../lib/api';
 import { getLockerStatusMeta } from '../lib/lockerStatus';
+import StationManager from './StationManager';
 
 function money(value) {
   return Number(value || 0).toLocaleString('vi-VN') + 'đ';
@@ -214,6 +215,7 @@ export default function AdminUI() {
     name: '',
     station_name: 'Trạm MVP',
   });
+  const [stations, setStations] = useState([]);
   const [rentals, setRentals] = useState([]);
   const [logs, setLogs] = useState([]);
   const [rentalPage, setRentalPage] = useState(1);
@@ -291,13 +293,14 @@ export default function AdminUI() {
   async function loadAll(activeToken = token) {
     if (!activeToken) return;
     try {
-      const [lockerData, statData, rentalRes, logRes, settingsData, activeRes] = await Promise.all([
+      const [lockerData, statData, rentalRes, logRes, settingsData, activeRes, stationData] = await Promise.all([
         api.getLockers(),
         api.adminStats(activeToken),
         api.adminRentals(activeToken, 1, 20, rentalFilter, debouncedSearch),
         api.adminLogs(activeToken, 1, 20),
         api.adminSettings(activeToken),
         api.adminRentals(activeToken, 1, 5, 'active', ''),
+        api.getStations(),
       ]);
       setLockers(lockerData);
       setStats(statData);
@@ -312,9 +315,10 @@ export default function AdminUI() {
       setActiveRentalPage(1);
       setSettings(settingsData);
       setSettingsDraft(settingsData);
+      setStations(stationData);
       setNewLocker((current) => ({
         ...current,
-        station_name: settingsData.station_name || current.station_name,
+        station_name: stationData.length > 0 ? stationData[0].name : (settingsData.station_name || current.station_name),
       }));
       if (selectedLocker) {
         setSelectedLocker(lockerData.find((locker) => locker.id === selectedLocker.id) || null);
@@ -882,7 +886,8 @@ export default function AdminUI() {
       )}
 
       {activeTab === 'settings' && (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <>
+          <div className="grid gap-6 lg:grid-cols-2">
           {/* Operating Settings Form */}
           <div className="baggo-surface rounded-lg border p-5">
             <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
@@ -979,11 +984,20 @@ export default function AdminUI() {
                 </label>
                 <label className="block">
                   <span className="text-sm font-bold text-slate-700">Trạm trực thuộc</span>
-                  <input
+                  <select
                     value={newLocker.station_name}
                     onChange={(event) => updateNewLockerField('station_name', event.target.value)}
-                    className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
-                  />
+                    className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none bg-white focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                  >
+                    {stations.map((station) => (
+                      <option key={station.id} value={station.name}>
+                        {station.name}
+                      </option>
+                    ))}
+                    {stations.length === 0 && (
+                      <option value="">(Không có trạm nào - Vui lòng thêm trạm phía dưới)</option>
+                    )}
+                  </select>
                 </label>
               </div>
             </div>
@@ -993,6 +1007,12 @@ export default function AdminUI() {
             </button>
           </div>
         </div>
+
+          {/* Station Management Panel */}
+          <div className="mt-6">
+            <StationManager token={token} />
+          </div>
+        </>
       )}
 
       {/* Locker Details Drawer (Box hiện lên) */}

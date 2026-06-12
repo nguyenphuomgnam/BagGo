@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Bell,
-  Clock,
   DoorClosed,
   DoorOpen,
   Loader2,
@@ -15,6 +14,8 @@ import {
   Zap,
 } from 'lucide-react';
 import { api, subscribeWs } from '../lib/api';
+import StationMap from './StationMap';
+import PaymentQrModal from './PaymentQrModal';
 
 function money(value) {
   return Number(value || 0).toLocaleString('vi-VN') + 'đ';
@@ -44,7 +45,7 @@ function PaymentQr() {
 function OvertimePaymentModal({ rental, onCancel, onConfirm, loading }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="baggo-surface w-full max-w-sm rounded-lg border p-5 shadow-xl">
+      <div className="baggo-surface w-full max-w-sm rounded-lg border p-5 shadow-xl bg-white">
         <h3 className="text-lg font-extrabold text-slate-900 font-sans">Thanh toán phí quá hạn</h3>
         <p className="mt-1 text-sm font-medium text-slate-500">
           Phiên thuê của bạn ở ngăn <span className="font-bold text-slate-900">{rental.locker_name || `Ngăn ${rental.locker_id}`}</span> đã quá hạn.
@@ -70,11 +71,11 @@ function OvertimePaymentModal({ rental, onCancel, onConfirm, loading }) {
   );
 }
 
-function LockerActionModal({ rental, onCancel, onBlink, onExtend, onTempOpen, onReturn, loading }) {
+function LockerActionModal({ rental, onCancel, onBlink, onExtend, onTempOpen, onReturn, onCheckin, loading }) {
   if (!rental) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="baggo-surface w-full max-w-sm rounded-lg border p-5 shadow-xl space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-xs">
+      <div className="baggo-surface w-full max-w-sm rounded-xl border p-5 shadow-xl space-y-4 bg-white">
         <div className="flex items-center justify-between border-b border-brand-100 pb-3">
           <div>
             <div className="text-xs font-extrabold uppercase text-slate-400">Phiên #{rental.id}</div>
@@ -106,7 +107,7 @@ function LockerActionModal({ rental, onCancel, onBlink, onExtend, onTempOpen, on
 
         {rental.status === 'RESERVED' && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
-            {rental.status_label || 'Phiên chưa hoàn tất'}: hãy hoàn tất thao tác và thanh toán tại kiosk.
+            {rental.status_label || 'Phiên đặt trước'}: Chưa check-in thanh toán.
           </div>
         )}
 
@@ -128,39 +129,52 @@ function LockerActionModal({ rental, onCancel, onBlink, onExtend, onTempOpen, on
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-brand-100">
-          <button
-            onClick={() => onBlink(rental.locker_id)}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700 transition"
-          >
-            <Zap className="h-4 w-4 text-indigo-500" />
-            Tìm tủ
-          </button>
-          <button
-            onClick={() => onExtend(rental.id)}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700 transition"
-          >
-            <Plus className="h-4 w-4 text-emerald-500" />
-            +1 giờ
-          </button>
-          <button
-            onClick={() => onTempOpen(rental.id)}
-            disabled={loading || rental.status === 'RESERVED'}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700 disabled:opacity-40 transition"
-          >
-            <DoorOpen className="h-4 w-4 text-amber-500" />
-            Mở tạm
-          </button>
-          <button
-            onClick={() => onReturn(rental)}
-            disabled={loading || rental.status === 'RESERVED'}
-            className="baggo-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-extrabold disabled:opacity-40 transition"
-          >
-            <ShieldCheck className="h-4 w-4" />
-            Trả tủ
-          </button>
+        <div className="space-y-2 pt-2 border-t border-brand-100">
+          {rental.status === 'RESERVED' ? (
+            <button
+              onClick={() => onCheckin(rental)}
+              disabled={loading}
+              className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-lg py-3 text-sm font-extrabold transition"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              Check-in (Thanh toán & Mở)
+            </button>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => onBlink(rental.locker_id)}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700 transition"
+              >
+                <Zap className="h-4 w-4 text-indigo-500" />
+                Tìm tủ
+              </button>
+              <button
+                onClick={() => onExtend(rental.id)}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700 transition"
+              >
+                <Plus className="h-4 w-4 text-emerald-500" />
+                +1 giờ
+              </button>
+              <button
+                onClick={() => onTempOpen(rental.id)}
+                disabled={loading}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-3 py-3 text-sm font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700 disabled:opacity-40 transition"
+              >
+                <DoorOpen className="h-4 w-4 text-amber-500" />
+                Mở tạm
+              </button>
+              <button
+                onClick={() => onReturn(rental)}
+                disabled={loading}
+                className="baggo-primary inline-flex items-center justify-center gap-2 rounded-lg px-3 py-3 text-sm font-extrabold disabled:opacity-40 transition"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Trả tủ
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -170,7 +184,7 @@ function LockerActionModal({ rental, onCancel, onBlink, onExtend, onTempOpen, on
 function ConfirmModal({ title, description, actionLabel, onCancel, onConfirm, loading }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4">
-      <div className="baggo-surface w-full max-w-sm rounded-lg border p-5 shadow-xl">
+      <div className="baggo-surface w-full max-w-sm rounded-lg border p-5 shadow-xl bg-white">
         <h3 className="text-lg font-extrabold text-slate-900">{title}</h3>
         <p className="mt-2 text-sm font-medium text-slate-500">{description}</p>
         <div className="mt-5 grid grid-cols-2 gap-2">
@@ -202,9 +216,46 @@ export default function ClientUI() {
   const [overtimePayment, setOvertimePayment] = useState(null);
   const [activeControlRental, setActiveControlRental] = useState(null);
 
+  // Thêm cho đặt trước và GPS
+  const [loginTab, setLoginTab] = useState('login'); // 'login' hoặc 'reserve'
+  const [stations, setStations] = useState([]);
+  const [selectedStationName, setSelectedStationName] = useState('');
+  const [lockers, setLockers] = useState([]);
+  const [selectedLockerId, setSelectedLockerId] = useState(null);
+  const [reserveHours, setReserveHours] = useState(2);
+  const [reserveStartTime, setReserveStartTime] = useState(''); // '' là 'Ngay bây giờ'
+  const [agreePolicy, setAgreePolicy] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState(null);
+
+  const filteredLockers = useMemo(() => {
+    return lockers.filter((locker) => locker.station_name === selectedStationName);
+  }, [lockers, selectedStationName]);
+
+  async function loadStations() {
+    try {
+      const data = await api.getStations();
+      setStations(data);
+      if (data.length > 0 && !selectedStationName) {
+        setSelectedStationName(data[0].name);
+      }
+    } catch (err) {
+      console.warn('Failed to load stations', err);
+    }
+  }
+
+  async function loadLockers() {
+    try {
+      const data = await api.getLockers();
+      setLockers(data);
+    } catch (err) {
+      console.warn('Failed to load lockers', err);
+    }
+  }
+
   function getFriendlyError(err, action) {
     if (err?.status === 404 && action === 'otp') {
-      return 'Số điện thoại này chưa có phiên thuê. Hãy quay lại kiosk để tạo phiên trước.';
+      return 'Số điện thoại này chưa có phiên thuê. Hãy đăng ký đặt trước hoặc quay lại kiosk.';
     }
     if (err?.status === 401 && action === 'verify') {
       return 'OTP chưa đúng. Kiểm tra lại mã đang được hệ thống cấp.';
@@ -240,9 +291,66 @@ export default function ClientUI() {
   useEffect(() => {
     loadRentals();
     loadConfig();
-    if (!token) return undefined;
-    return subscribeWs(() => loadRentals());
+    loadStations();
+    loadLockers();
+    if (!token) {
+      // Periodic refresh when logged out to show locker status correctly
+      const interval = setInterval(() => {
+        loadLockers();
+        loadStations();
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+    return subscribeWs(() => {
+      loadRentals();
+      loadLockers();
+      loadStations();
+    });
   }, [token]);
+
+  async function handleReserve() {
+    if (!agreePolicy) {
+      setMessage({ type: 'error', text: 'Bạn phải đồng ý với chính sách giữ chỗ 15 phút.' });
+      return;
+    }
+    if (!selectedLockerId) {
+      setMessage({ type: 'error', text: 'Vui lòng chọn một ngăn tủ còn trống.' });
+      return;
+    }
+    if (!phone.trim()) {
+      setMessage({ type: 'error', text: 'Vui lòng nhập số điện thoại để đặt trước.' });
+      return;
+    }
+    setLoading(true);
+    setMessage({ type: 'info', text: '' });
+    try {
+      let startTimeIso = null;
+      if (reserveStartTime) {
+        const d = new Date();
+        const mins = parseInt(reserveStartTime, 10);
+        d.setMinutes(d.getMinutes() + mins);
+        startTimeIso = d.toISOString();
+      }
+      await api.reserve({
+        lockerId: selectedLockerId,
+        hours: reserveHours,
+        phone: phone,
+        startTime: startTimeIso,
+      });
+
+      setMessage({
+        type: 'success',
+        text: `Đặt trước thành công ngăn ${selectedLockerId}! Bạn có 15 phút từ thời gian hẹn để check-in và gửi đồ.`,
+      });
+      
+      setLoginTab('login');
+      setSelectedLockerId(null);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || 'Lỗi đặt trước tủ.' });
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function requestOtp() {
     setLoading(true);
@@ -360,80 +468,287 @@ export default function ClientUI() {
 
   if (!token) {
     return (
-      <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="baggo-surface rounded-lg border p-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-600 text-white">
-            <Smartphone className="h-6 w-6" />
-          </div>
-          <h1 className="mt-4 text-2xl font-extrabold tracking-tight">Quản lý tủ của bạn</h1>
-          <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-            Nhập đúng số điện thoại đã dùng tại kiosk. Nếu chưa có phiên thuê thì quay lại kiosk tạo phiên trước, rồi mới lấy OTP để vào tủ của bạn.
-          </p>
-          <div className="mt-5 space-y-4">
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">Số điện thoại</span>
-              <input
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                inputMode="tel"
-                className="mt-2 w-full rounded-lg border border-brand-100 px-3 py-3 text-base font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20"
-                placeholder="0901234567"
-              />
-            </label>
-            <button onClick={requestOtp} disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-4 py-3 font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700 disabled:opacity-60">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4" />}
-              Gửi OTP
-            </button>
-            {otpHint && <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">{otpHint}</div>}
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">OTP</span>
-              <input
-                value={otp}
-                onChange={(event) => setOtp(event.target.value)}
-                inputMode="numeric"
-                className="mt-2 w-full rounded-lg border border-brand-100 px-3 py-3 text-center text-xl font-extrabold tracking-widest outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20"
-                placeholder="000000"
-              />
-            </label>
-            <button onClick={verifyOtp} disabled={loading} className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold disabled:opacity-60">
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Mở tủ
-            </button>
-            <Message type={message.type}>{message.text}</Message>
-          </div>
-        </section>
+      <div className="mx-auto max-w-5xl space-y-5">
+        {/* Layout chính: 2 cột */}
+        <div className="grid gap-5 lg:grid-cols-[420px_1fr]">
 
-        <section className="baggo-surface rounded-lg border p-5">
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              ['Face ID tại kiosk', 'Nhanh khi camera và ánh sáng ổn định.'],
-              ['SĐT + OTP dự phòng', 'Dùng khi Face ID không nhận được.'],
-              ['Điều khiển từ xa', 'Xem thời gian, nháy LED, gia hạn và trả tủ.'],
-            ].map(([title, desc]) => (
-              <div key={title} className="rounded-lg border border-brand-100 bg-brand-50 p-4">
-                <ShieldCheck className="mb-3 h-5 w-5 text-brand-600" />
-                <div className="font-extrabold text-slate-900">{title}</div>
-                <p className="mt-2 text-sm font-medium leading-5 text-slate-500">{desc}</p>
+          {/* ===== CỘT TRÁI: Form đăng nhập ===== */}
+          <section className="baggo-surface rounded-2xl border p-6 shadow-sm space-y-5 bg-white">
+            {/* Header */}
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+                <Smartphone className="h-5 w-5" />
               </div>
-            ))}
-          </div>
-          <div className="mt-5 rounded-lg border border-brand-100 bg-brand-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-extrabold text-slate-700">
-              <MapPin className="h-4 w-4 text-slate-500" />
-              {config.station_name}
+              <div>
+                <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Quản lý tủ của bạn</h1>
+                <p className="text-xs font-medium text-slate-400">Đăng nhập bằng SĐT để xem & điều khiển tủ</p>
+              </div>
             </div>
-            <p className="mt-2 text-sm font-medium text-slate-500">
-              Bản này tập trung 1 trạm 6 ngăn. Khi mở rộng nhiều trạm, màn này sẽ thêm bản đồ và đặt trước theo vị trí.
-            </p>
-          </div>
-        </section>
+
+            {/* Phone input */}
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Số điện thoại</span>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  inputMode="tel"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-3 text-base font-semibold outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                  placeholder="0901234567"
+                />
+              </label>
+
+              <button
+                onClick={requestOtp}
+                disabled={loading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:border-brand-300 hover:text-brand-700 disabled:opacity-60"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bell className="h-4 w-4 text-brand-500" />}
+                Gửi OTP
+              </button>
+
+              {otpHint && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
+                  {otpHint}
+                </div>
+              )}
+
+              <label className="block">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Mã OTP</span>
+                <input
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  inputMode="numeric"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-3.5 text-center text-2xl font-extrabold tracking-[0.3em] outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                  placeholder="000000"
+                  maxLength={6}
+                />
+              </label>
+
+              <button
+                onClick={verifyOtp}
+                disabled={loading}
+                className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-extrabold shadow-sm disabled:opacity-60"
+              >
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                Đăng nhập
+              </button>
+
+              <Message type={message.type}>{message.text}</Message>
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-slate-100" />
+              <span className="text-xs font-bold text-slate-400">hoặc</span>
+              <div className="h-px flex-1 bg-slate-100" />
+            </div>
+
+            {/* Checkbox toggle Đặt trước */}
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-brand-100 bg-brand-50/50 p-4 transition hover:border-brand-300">
+              <div className="relative mt-0.5">
+                <input
+                  type="checkbox"
+                  checked={loginTab === 'reserve'}
+                  onChange={(e) => {
+                    setLoginTab(e.target.checked ? 'reserve' : 'login');
+                    setMessage({ type: 'info', text: '' });
+                  }}
+                  className="sr-only"
+                />
+                <div className={`h-5 w-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${
+                  loginTab === 'reserve' ? 'border-brand-600 bg-brand-600' : 'border-slate-300 bg-white'
+                }`}>
+                  {loginTab === 'reserve' && (
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-extrabold text-slate-800">Đặt trước tủ</div>
+                <p className="mt-0.5 text-xs font-medium text-slate-500">
+                  Chọn trạm, đặt trước ngăn tủ với thời gian hẹn lên đến 2 tiếng.
+                </p>
+              </div>
+            </label>
+
+            {/* Info cards (collapsed when reserve mode) */}
+            {loginTab === 'login' && (
+              <div className="grid gap-2 sm:grid-cols-3">
+                {[
+                  ['Face ID kiosk', 'Camera nhận diện khuôn mặt bảo mật cao.'],
+                  ['SĐT + OTP', 'Dùng khi Face ID không nhận được.'],
+                  ['Điều khiển xa', 'Xem giờ, gia hạn, mở tạm, trả tủ.'],
+                ].map(([title, desc]) => (
+                  <div key={title} className="rounded-xl border border-brand-100 bg-brand-50/50 p-3">
+                    <ShieldCheck className="mb-2 h-4 w-4 text-brand-600" />
+                    <div className="text-xs font-extrabold text-slate-800">{title}</div>
+                    <p className="mt-1 text-xs font-medium leading-4 text-slate-500">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Reservation form (inline khi checkbox bật) */}
+            {loginTab === 'reserve' && (
+              <div className="space-y-4 pt-1">
+                {/* Phone (dùng chung) */}
+                {!phone && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-700">
+                    Nhập số điện thoại ở trên để đặt trước.
+                  </div>
+                )}
+
+                {/* Select locker */}
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                    Chọn ngăn trống tại: <span className="text-brand-700">{selectedStationName || '...'}</span>
+                  </span>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {filteredLockers.map((locker) => {
+                      const isAvailable = locker.status === 'AVAILABLE';
+                      const isSelected = selectedLockerId === locker.id;
+                      return (
+                        <button
+                          key={locker.id}
+                          type="button"
+                          disabled={!isAvailable}
+                          onClick={() => setSelectedLockerId(locker.id)}
+                          className={`rounded-xl border py-3 text-center text-xs font-extrabold transition ${
+                            isSelected
+                              ? 'border-brand-600 bg-brand-600 text-white shadow-sm'
+                              : isAvailable
+                              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400'
+                              : 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400'
+                          }`}
+                        >
+                          <div>{locker.name}</div>
+                          <div className="mt-0.5 text-[10px] opacity-80">{isAvailable ? 'Trống' : 'Bận'}</div>
+                        </button>
+                      );
+                    })}
+                    {filteredLockers.length === 0 && (
+                      <div className="col-span-3 rounded-xl border border-dashed border-slate-200 py-5 text-center text-xs font-bold text-slate-400">
+                        Không có ngăn trống tại trạm này
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Time pickers */}
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Thời gian đến</span>
+                    <select
+                      value={reserveStartTime}
+                      onChange={(e) => setReserveStartTime(e.target.value)}
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                    >
+                      <option value="">Ngay bây giờ</option>
+                      <option value="15">Sau 15 phút</option>
+                      <option value="30">Sau 30 phút</option>
+                      <option value="60">Sau 1 tiếng</option>
+                      <option value="120">Sau 2 tiếng</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Số giờ thuê</span>
+                    <select
+                      value={reserveHours}
+                      onChange={(e) => setReserveHours(parseInt(e.target.value, 10))}
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                    >
+                      {Array.from(
+                        { length: (config.max_rental_hours || 24) - (config.min_rental_hours || 1) + 1 },
+                        (_, i) => (config.min_rental_hours || 1) + i
+                      ).map((h) => (
+                        <option key={h} value={h}>
+                          {h} giờ ({money(h * (config.price_per_hour || 10000))})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                {/* Policy */}
+                <label className="flex cursor-pointer items-start gap-2">
+                  <input
+                    type="checkbox"
+                    checked={agreePolicy}
+                    onChange={(e) => setAgreePolicy(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-brand-200 text-brand-600"
+                  />
+                  <span className="text-xs font-medium leading-4 text-slate-500">
+                    Tôi đồng ý giữ chỗ và cam kết check-in trong vòng 15 phút từ thời điểm hẹn.
+                  </span>
+                </label>
+
+                <button
+                  onClick={handleReserve}
+                  disabled={loading || !selectedLockerId || !agreePolicy}
+                  className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-extrabold shadow-sm disabled:opacity-60 transition"
+                >
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Đặt giữ tủ ngay
+                </button>
+              </div>
+            )}
+          </section>
+
+          {/* ===== CỘT PHẢI: Map (chỉ hiện khi Đặt trước) ===== */}
+          {loginTab === 'reserve' ? (
+            <section className="baggo-surface rounded-2xl border p-5 shadow-sm bg-white">
+              <h2 className="mb-4 flex items-center gap-2 text-base font-extrabold text-slate-800">
+                <MapPin className="h-5 w-5 text-brand-600" />
+                Bản đồ trạm BagGo
+              </h2>
+              <StationMap
+                stations={stations}
+                selectedStationName={selectedStationName}
+                onSelectStationName={setSelectedStationName}
+              />
+            </section>
+          ) : (
+            <section className="baggo-surface rounded-2xl border p-6 shadow-sm flex flex-col justify-center bg-white">
+              <div className="text-center space-y-4">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50">
+                  <LockKeyhole className="h-8 w-8 text-brand-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-slate-900">Tủ gửi đồ thông minh</h2>
+                  <p className="mt-2 text-sm font-medium text-slate-500 leading-6">
+                    Hệ thống BagGo cho phép bạn gửi đồ an toàn, đặt trước trực tuyến và quản lý từ xa mọi lúc.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 text-left">
+                  {[
+                    ['🔒', 'Face ID bảo mật', 'Nhận diện khuôn mặt tại kiosk nhanh chóng'],
+                    ['📱', 'OTP dự phòng', 'Xác thực qua số điện thoại đã đăng ký'],
+                    ['🗺️', 'Đặt trước online', 'Giữ chỗ tủ trước khi đến tối đa 2 tiếng'],
+                    ['⚡', 'Điều khiển xa', 'Gia hạn, mở tạm, trả tủ qua ứng dụng'],
+                  ].map(([icon, title, desc]) => (
+                    <div key={title} className="flex items-start gap-3 rounded-xl border border-brand-100 bg-brand-50/40 px-4 py-3">
+                      <span className="text-lg">{icon}</span>
+                      <div>
+                        <div className="text-sm font-extrabold text-slate-800">{title}</div>
+                        <p className="text-xs font-medium text-slate-500">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <section className="baggo-surface rounded-lg border p-5">
+      <section className="baggo-surface rounded-lg border p-5 bg-white">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight">Tủ của tôi</h1>
@@ -454,7 +769,7 @@ export default function ClientUI() {
           <article
             key={rental.id}
             onClick={() => setActiveControlRental(rental)}
-            className="baggo-surface rounded-lg border p-5 cursor-pointer hover:border-brand-500 hover:shadow-md transition duration-200"
+            className="baggo-surface rounded-lg border p-5 cursor-pointer hover:border-brand-500 hover:shadow-md transition duration-200 bg-white"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -522,6 +837,11 @@ export default function ClientUI() {
             setConfirmRental(rental);
             setActiveControlRental(null);
           }}
+          onCheckin={(rental) => {
+            setPaymentModalData(rental);
+            setPaymentModalOpen(true);
+            setActiveControlRental(null);
+          }}
         />
       )}
 
@@ -550,6 +870,24 @@ export default function ClientUI() {
           }}
         />
       )}
+
+      <PaymentQrModal
+        isOpen={paymentModalOpen}
+        onClose={() => {
+          setPaymentModalOpen(false);
+          setPaymentModalData(null);
+        }}
+        onPaymentSuccess={async () => {
+          setPaymentModalOpen(false);
+          setPaymentModalData(null);
+          setMessage({ type: 'success', text: 'Thanh toán check-in thành công. Tủ đã được mở khóa!' });
+          await loadRentals();
+        }}
+        amount={paymentModalData?.total_due || paymentModalData?.price || 0}
+        rentalId={paymentModalData?.id}
+        lockerName={paymentModalData?.locker_name || `Ngăn ${paymentModalData?.locker_id}`}
+        stationName={paymentModalData?.station_name || config.station_name}
+      />
     </div>
   );
 }

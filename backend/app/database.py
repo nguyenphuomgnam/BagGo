@@ -77,6 +77,17 @@ def init_db():
             value TEXT NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS stations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            address TEXT
+        );
+        INSERT OR IGNORE INTO stations (name, latitude, longitude, address) VALUES ('Trạm MVP', 10.7725, 106.6679, '100 Đường 3/2, Quận 10, TP. Hồ Chí Minh');
+        INSERT OR IGNORE INTO stations (name, latitude, longitude, address) VALUES ('Trạm BagGo Quận 1', 10.7769, 106.7009, 'Hồ Tùng Mậu, Bến Nghé, Quận 1, TP. Hồ Chí Minh');
+        INSERT OR IGNORE INTO stations (name, latitude, longitude, address) VALUES ('Trạm BagGo Quận 3', 10.7798, 106.6818, '200 Nguyễn Đình Chiểu, Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh');
     """)
     _ensure_column(conn, "lockers", "station_name", "TEXT DEFAULT 'Trạm MVP'")
     _ensure_column(conn, "lockers", "is_active", "INTEGER DEFAULT 1")

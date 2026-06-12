@@ -122,7 +122,14 @@ export function subscribeWs(onMessage) {
 export const api = {
   getPublicConfig: () => request('/api/config'),
   getLockers: async () => requireArray(await request('/api/lockers'), 'Danh sách tủ'),
-  reserve: ({ lockerId, hours, phone }) => request(`/api/reserve?locker_id=${lockerId}&hours=${hours}&phone=${encodeURIComponent(phone)}`, { method: 'POST' }),
+  reserve: ({ lockerId, hours, phone, startTime }) => {
+    let url = `/api/reserve?locker_id=${lockerId}&hours=${hours}&phone=${encodeURIComponent(phone)}`;
+    if (startTime) {
+      url += `&start_time=${encodeURIComponent(startTime)}`;
+    }
+    return request(url, { method: 'POST' });
+  },
+  getStations: async () => requireArray(await request('/api/stations'), 'Danh sách trạm'),
   cancelReservation: (rentalId) => request(`/api/cancel-reservation?rental_id=${rentalId}`, { method: 'POST' }),
   uploadFace: (rentalId, file) => {
     const body = new FormData();
@@ -170,4 +177,7 @@ export const api = {
   adminOpen: (token, lockerId) => request(`/api/admin/open?locker_id=${lockerId}`, { method: 'POST', token }),
   adminClose: (token, lockerId) => request(`/api/admin/close?locker_id=${lockerId}`, { method: 'POST', token }),
   adminForceReturn: (token, lockerId) => request(`/api/admin/force-return?locker_id=${lockerId}`, { method: 'POST', token }),
+  createStation: (token, body) => request('/api/admin/stations', { method: 'POST', token, body }),
+  updateStation: (token, id, body) => request(`/api/admin/stations/${id}`, { method: 'PUT', token, body }),
+  deleteStation: (token, id) => request(`/api/admin/stations/${id}`, { method: 'DELETE', token }),
 };

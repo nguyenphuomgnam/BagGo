@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { api, subscribeWs } from '../lib/api';
 import { getLockerStatusMeta } from '../lib/lockerStatus';
+import PaymentQrModal from './PaymentQrModal';
 
 function money(value) {
   return Number(value || 0).toLocaleString('vi-VN') + 'đ';
@@ -228,6 +229,11 @@ export default function KioskUI() {
     setSelectedLocker(locker);
     setMessage({ type: 'info', text: '' });
     if (flow === 'store') {
+      if (locker.status === 'RESERVED') {
+        setStep('otp');
+        setMessage({ type: 'info', text: 'Nhập số điện thoại đã dùng để đặt trước để tiến hành check-in và gửi đồ.' });
+        return;
+      }
       if (locker.status !== 'AVAILABLE') {
         setMessage({ type: 'error', text: 'Ngăn này chưa trống. Hãy chọn ngăn có trạng thái Trống.' });
         return;
@@ -237,6 +243,10 @@ export default function KioskUI() {
     }
     if (locker.status === 'AVAILABLE') {
       setMessage({ type: 'error', text: 'Ngăn này đang trống, không có phiên cần nhận đồ.' });
+      return;
+    }
+    if (locker.status === 'RESERVED') {
+      setMessage({ type: 'error', text: 'Ngăn tủ này đã được đặt trước nhưng chưa gửi đồ. Vui lòng chọn mục Gửi đồ để check-in.' });
       return;
     }
     if (!['OCCUPIED', 'OVERTIME', 'ADMIN_INTERVENTION'].includes(locker.status)) {
@@ -331,8 +341,14 @@ export default function KioskUI() {
         : data.rentals[0];
       if (!matched) throw new Error('Số điện thoại này không có phiên ở ngăn đã chọn.');
       setRental({ ...matched, rental_id: matched.id });
-      setStep('actions');
-      setMessage({ type: 'success', text: 'OTP hợp lệ. Bạn có thể thao tác với tủ.' });
+      
+      if (matched.status === 'RESERVED') {
+        setStep('payment');
+        setMessage({ type: 'success', text: 'Xác thực OTP thành công. Vui lòng thanh toán để check-in.' });
+      } else {
+        setStep('actions');
+        setMessage({ type: 'success', text: 'OTP hợp lệ. Bạn có thể thao tác với tủ.' });
+      }
     } catch (err) {
       setMessage({ type: 'error', text: err.message });
     } finally {
@@ -580,22 +596,18 @@ export default function KioskUI() {
               )}
 
               {step === 'payment' && (
-                <div className="mt-4 space-y-4">
-                  <div className="flex flex-col items-center gap-4 rounded-lg border border-brand-100 bg-brand-50 p-5">
-                    <PaymentQr />
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-slate-500">VietQR demo</div>
-                      <div className="text-2xl font-extrabold">{money(rental?.price)}</div>
-                    </div>
-                  </div>
-                  <button
-                    disabled={loading}
-                    onClick={confirmPayment}
-                    className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold disabled:opacity-60"
-                  >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                    Xác nhận đã thanh toán
-                  </button>
+                <div className="mt-4 text-center py-8 text-slate-500 font-semibold border border-dashed rounded-lg bg-slate-50">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-brand-600 mb-2" />
+                  Đang mở cổng thanh toán VietQR...
+                  <PaymentQrModal
+                    isOpen={step === 'payment'}
+                    onClose={reset}
+                    onPaymentSuccess={confirmPayment}
+                    amount={rental?.price || 0}
+                    rentalId={rental?.rental_id}
+                    lockerName={selectedLocker?.name || `Ngăn ${rental?.locker_id}`}
+                    stationName={selectedLocker?.station_name || config.station_name}
+                  />
                 </div>
               )}
 
@@ -654,34 +666,21 @@ export default function KioskUI() {
               )}
 
               {step === 'overtime-payment' && (
-                <div className="mt-4 space-y-4">
-                  <div className="flex flex-col items-center gap-4 rounded-lg border border-amber-200 bg-amber-50 p-5">
-                    <PaymentQr />
-                    <div className="text-center">
-                      <div className="text-sm font-bold text-amber-700">VietQR Thanh toán quá giờ</div>
-                      <div className="text-2xl font-extrabold text-slate-900">{money(rental?.overtime_fee)}</div>
-                      <p className="mt-2 text-xs font-semibold text-slate-500">Quét mã QR để thanh toán phí quá hạn trước khi tủ mở.</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => {
-                        setStep('actions');
-                        setOvertimeAction(null);
-                      }}
-                      className="rounded-lg border border-brand-100 bg-white px-4 py-3 font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      disabled={loading}
-                      onClick={overtimeAction === 'temp-open' ? executeTempOpen : executeReturnLocker}
-                      className="baggo-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold disabled:opacity-60"
-                    >
-                      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-                      Xác nhận đã thanh toán
-                    </button>
-                  </div>
+                <div className="mt-4 text-center py-8 text-slate-500 font-semibold border border-dashed rounded-lg bg-slate-50">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-brand-600 mb-2" />
+                  Đang mở cổng thanh toán VietQR cho phí quá hạn...
+                  <PaymentQrModal
+                    isOpen={step === 'overtime-payment'}
+                    onClose={() => {
+                      setStep('actions');
+                      setOvertimeAction(null);
+                    }}
+                    onPaymentSuccess={overtimeAction === 'temp-open' ? executeTempOpen : executeReturnLocker}
+                    amount={rental?.overtime_fee || 0}
+                    rentalId={rental?.rental_id}
+                    lockerName={selectedLocker?.name || `Ngăn ${rental?.locker_id}`}
+                    stationName={selectedLocker?.station_name || config.station_name}
+                  />
                 </div>
               )}
 

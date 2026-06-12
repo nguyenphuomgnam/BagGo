@@ -2,7 +2,7 @@
 + Thêm  bản  đồ (  các chạm ) + các  tủ 
 +  check  điều kiện quá giờ thì  thanh toán tiền trước khi khi  mới đc mở tủ 
 + thêm box đặt trước :  đặt  trước  2 tiếng ( nếu chx  mở tủ đó  giữ chỗ  max 15p ) 
-+  Hiện  thị  tick  chính sách !
++  Hiện  thị  tick  
 
 
 - Kios :  Quảng  cáo  chèn (  admin  chèn quyền ưu tiên ) 
@@ -31,3 +31,6 @@
 
 
 font  chữ :  mona sans ,   inter 
+
+
+sỬALAIJ  TÊN LOGO  LÀ :  Bago 

@@ -142,10 +142,6 @@ def cancel_pending_reservation(rental_id: int, actor: str = "customer", detail: 
 
 
 def expire_pending_reservations():
-    hold_seconds = get_app_settings()["reservation_hold_seconds"]
-    if hold_seconds <= 0:
-        return []
-
     now = datetime.datetime.now()
     conn = get_db()
     rows = conn.execute(
@@ -162,15 +158,21 @@ def expire_pending_reservations():
         start_time = parse_db_datetime(rental["start_time"])
         if start_time is None:
             continue
+        
+        # Nếu thời gian hẹn bắt đầu thuê ở tương lai thì chưa hết hạn
+        if start_time > now:
+            continue
+            
+        # Thời gian chờ check-in tối đa là 15 phút (900 giây) kể từ thời điểm hẹn bắt đầu
         age_seconds = int((now - start_time).total_seconds())
-        if age_seconds < hold_seconds:
+        if age_seconds < 900:
             continue
 
         locker_id = _cancel_pending_rental_in_tx(
             conn,
             rental,
             "system",
-            f"Tự hủy phiên giữ chỗ #{rental['id']} sau {hold_seconds} giây chưa thanh toán",
+            f"Tự hủy phiên giữ chỗ #{rental['id']} sau 15 phút chưa check-in",
         )
         expired_locker_ids.append(locker_id)
 

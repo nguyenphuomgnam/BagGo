@@ -34,6 +34,13 @@ class LockerCreateRequest(BaseModel):
     station_name: str = Field(default="Trạm MVP", max_length=120)
 
 
+class StationCreateRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    latitude: float = Field(ge=-90.0, le=90.0)
+    longitude: float = Field(ge=-180.0, le=180.0)
+    address: str = Field(default="", max_length=255)
+
+
 def _extract_bearer_token(authorization: str | None) -> str | None:
     if not authorization:
         return None
@@ -416,7 +423,80 @@ def get_admin_stats(_: bool = Depends(require_admin)):
         "overtime_sessions": overtime_sessions,
         "available_lockers": available_lockers,
         "busy_lockers": busy_lockers,
-        "total_lockers": len(lockers),
         "utilization_rate": round((busy_lockers / len(lockers)) * 100) if lockers else 0,
         "alerts": alerts,
     }
+
+
+@router.post("/admin/stations", dependencies=[Depends(require_admin)])
+def create_station(payload: StationCreateRequest):
+    conn = get_db()
+    try:
+        conn.execute(
+            """
+            INSERT INTO stations (name, latitude, longitude, address)
+            VALUES (?, ?, ?, ?)
+            """,
+            (payload.name.strip(), payload.latitude, payload.longitude, payload.address.strip())
+        )
+        conn.commit()
+    except Exception as e:
+        conn.close()
+        raise HTTPException(400, f"Trạm đã tồn tại hoặc dữ liệu không hợp lệ: {str(e)}")
+    
+    row = conn.execute("SELECT * FROM stations WHERE name = ?", (payload.name.strip(),)).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@router.put("/admin/stations/{station_id}", dependencies=[Depends(require_admin)])
+def update_station(station_id: int, payload: StationCreateRequest):
+    conn = get_db()
+    station = conn.execute("SELECT * FROM stations WHERE id = ?", (station_id,)).fetchone()
+    if not station:
+        conn.close()
+        raise HTTPException(404, "Không tìm thấy trạm")
+    
+    # Kiểm tra trùng tên trạm khác
+    existing = conn.execute("SELECT * FROM stations WHERE name = ? AND id != ?", (payload.name.strip(), station_id)).fetchone()
+    if existing:
+        conn.close()
+        raise HTTPException(400, "Tên trạm đã tồn tại")
+    
+    conn.execute(
+        """
+        UPDATE stations
+        SET name = ?, latitude = ?, longitude = ?, address = ?
+        WHERE id = ?
+        """,
+        (payload.name.strip(), payload.latitude, payload.longitude, payload.address.strip(), station_id)
+    )
+    # Cập nhật cả tên trạm trong lockers
+    conn.execute(
+        "UPDATE lockers SET station_name = ? WHERE station_name = ?",
+        (payload.name.strip(), station["name"])
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM stations WHERE id = ?", (station_id,)).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@router.delete("/admin/stations/{station_id}", dependencies=[Depends(require_admin)])
+def delete_station(station_id: int):
+    conn = get_db()
+    station = conn.execute("SELECT * FROM stations WHERE id = ?", (station_id,)).fetchone()
+    if not station:
+        conn.close()
+        raise HTTPException(404, "Không tìm thấy trạm")
+    
+    # Kiểm tra xem có tủ khóa nào thuộc trạm này không
+    lockers = conn.execute("SELECT COUNT(*) FROM lockers WHERE station_name = ?", (station["name"],)).fetchone()[0]
+    if lockers > 0:
+        conn.close()
+        raise HTTPException(400, "Không thể xóa trạm vì đang có ngăn tủ hoạt động tại trạm này")
+        
+    conn.execute("DELETE FROM stations WHERE id = ?", (station_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "ok", "deleted_station_id": station_id}
