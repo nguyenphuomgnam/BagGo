@@ -25,11 +25,11 @@ def update_locker_status(locker_id: int, new_status: str):
     led_mode = LOCKER_LED_BY_STATUS.get(new_status, "RED")
     _publish(f"locker/{locker_id}/led", led_mode)
 
-    asyncio.run(manager.broadcast(json.dumps({
+    manager.broadcast_sync(json.dumps({
         "type": "locker_update",
         "locker_id": locker_id,
         "status": new_status
-    })))
+    }))
 
 def open_locker(locker_id: int):
     _publish(f"locker/{locker_id}/open", "")

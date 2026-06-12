@@ -1101,21 +1101,21 @@ export default function AdminUI() {
               <div className="space-y-3 pt-3 border-t border-slate-100">
                 <div className="text-xs font-extrabold uppercase text-slate-400">Điều khiển phần cứng (IoT)</div>
                 <div className="space-y-2.5">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     <button 
                       onClick={() => openAction('open')} 
                       className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-200 bg-brand-50 px-3 py-3 text-sm font-extrabold text-brand-700 hover:bg-brand-100 transition duration-150"
                     >
-                      <DoorOpen className="h-4 w-4" />
+                      <DoorOpen className="h-6 w-6" />
                       Mở khóa khẩn
                     </button>
-                    <button 
+                    {/* <button 
                       onClick={() => openAction('close')} 
                       className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-3 text-sm font-extrabold text-slate-700 hover:bg-slate-50 transition duration-150"
                     >
                       <DoorClosed className="h-4 w-4" />
                       Khôi phục đóng
-                    </button>
+                    </button> */}
                   </div>
                   
                   <button 

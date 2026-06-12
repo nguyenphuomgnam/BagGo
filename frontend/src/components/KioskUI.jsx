@@ -239,7 +239,7 @@ export default function KioskUI() {
       setMessage({ type: 'error', text: 'Ngăn này đang trống, không có phiên cần nhận đồ.' });
       return;
     }
-    if (!['OCCUPIED', 'OVERTIME'].includes(locker.status)) {
+    if (!['OCCUPIED', 'OVERTIME', 'ADMIN_INTERVENTION'].includes(locker.status)) {
       setMessage({ type: 'error', text: 'Phiên này chưa thanh toán và chưa mở tủ. Hãy hoàn tất gửi đồ hoặc chờ phiên giữ chỗ tự hủy.' });
       return;
     }

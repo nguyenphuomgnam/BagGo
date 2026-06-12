@@ -31,12 +31,12 @@ def on_message(client, userdata, msg):
         conn.commit()
         conn.close()
 
-        asyncio.run(manager.broadcast(json.dumps({
+        manager.broadcast_sync(json.dumps({
             "type": "locker_status",
             "locker_id": locker_id,
             "locked": data.get("locked"),
             "unlocking": data.get("unlocking")
-        })))
+        }))
     except Exception as e:
         print("MQTT on_message error:", e)
 

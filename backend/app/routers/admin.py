@@ -210,8 +210,19 @@ def force_return(locker_id: int = 1, _: bool = Depends(require_admin)):
     conn = get_db()
     rental = get_active_rental_for_locker(conn, locker_id)
     if rental is None:
+        locker = conn.execute("SELECT * FROM lockers WHERE id = ?", (locker_id,)).fetchone()
+        if locker is None:
+            conn.close()
+            raise HTTPException(404, "Không tìm thấy ngăn")
+        if locker["status"] == "AVAILABLE":
+            conn.close()
+            raise HTTPException(400, "Ngăn tủ đã ở trạng thái trống")
+
         conn.close()
-        raise HTTPException(400, "Không có phiên thuê đang hoạt động")
+        open_locker(locker_id)
+        update_locker_status(locker_id, "AVAILABLE")
+        log_action(locker_id, "admin", "FORCE_RETURN", "Admin giải phóng cưỡng chế ngăn tủ (không có phiên thuê)")
+        return {"status": "force_return", "rental_id": None, "locker_id": locker_id, "overtime_fee": 0}
 
     rental_id = rental["id"]
     settings = get_app_settings(conn)
