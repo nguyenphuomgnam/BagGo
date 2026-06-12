@@ -10,6 +10,8 @@ export default function PaymentQrModal({
   rentalId,
   lockerName,
   stationName,
+  paymentType = 'checkin',
+  token = '',
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +27,11 @@ export default function PaymentQrModal({
     setLoading(true);
     setError('');
     try {
-      await api.paymentCallback(rentalId);
+      if (paymentType === 'extend') {
+        await api.customerExtend(token, rentalId, 1);
+      } else {
+        await api.paymentCallback(rentalId);
+      }
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
@@ -46,7 +52,9 @@ export default function PaymentQrModal({
         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <ReceiptText className="h-5 w-5 text-brand-600" />
-            <h3 className="text-lg font-extrabold text-slate-800">Thanh toán Check-in</h3>
+            <h3 className="text-lg font-extrabold text-slate-800">
+              {paymentType === 'extend' ? 'Thanh toán Gia hạn tủ' : 'Thanh toán Check-in'}
+            </h3>
           </div>
           <button 
             onClick={onClose}
@@ -62,7 +70,11 @@ export default function PaymentQrModal({
               <ShieldCheck className="h-12 w-12" />
             </div>
             <h4 className="text-xl font-extrabold text-emerald-600">Thanh toán thành công!</h4>
-            <p className="text-sm font-semibold text-slate-500">Hệ thống đang mở khóa ngăn {lockerName}...</p>
+            <p className="text-sm font-semibold text-slate-500">
+              {paymentType === 'extend'
+                ? `Ngăn ${lockerName} đã được gia hạn thêm 1 giờ thành công.`
+                : `Hệ thống đang mở khóa ngăn ${lockerName}...`}
+            </p>
           </div>
         ) : (
           <div className="mt-4 space-y-4">
@@ -80,6 +92,12 @@ export default function PaymentQrModal({
                 <span>Ngăn tủ khóa:</span>
                 <span className="text-brand-600 font-extrabold">{lockerName}</span>
               </div>
+              {paymentType === 'extend' && (
+                <div className="flex justify-between">
+                  <span>Thời gian gia hạn:</span>
+                  <span className="text-slate-900 font-bold">+1 giờ</span>
+                </div>
+              )}
               <div className="flex justify-between pt-2 border-t border-slate-200 text-base">
                 <span className="text-slate-800 font-bold">Tổng tiền cần trả:</span>
                 <span className="font-mono font-extrabold text-brand-700">{money(amount)}</span>
