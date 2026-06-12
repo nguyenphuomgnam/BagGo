@@ -45,7 +45,8 @@ function Shell() {
           <Route path="/" element={<Navigate to="/kiosk" replace />} />
           <Route path="/kiosk" element={<KioskUI />} />
           <Route path="/customer" element={<ClientUI />} />
-          <Route path="/admin" element={<AdminUI />} />
+          <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
+          <Route path="/admin/:activeTab" element={<AdminUI />} />
           <Route path="*" element={<Navigate to="/kiosk" replace />} />
         </Routes>
       </main>

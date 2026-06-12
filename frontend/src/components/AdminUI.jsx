@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Activity,
   AlertTriangle,
@@ -232,7 +233,8 @@ export default function AdminUI() {
   const [message, setMessage] = useState({ type: 'info', text: '' });
   const [loading, setLoading] = useState(false);
   const [pendingAction, setPendingAction] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
+  const { activeTab = 'overview' } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -313,12 +315,20 @@ export default function AdminUI() {
       setActiveRentals(activeRes.items);
       setActiveRentalMeta({ total: activeRes.total, pages: activeRes.pages });
       setActiveRentalPage(1);
-      setSettings(settingsData);
-      setSettingsDraft(settingsData);
-      setStations(stationData);
+      const defaultSettings = {
+        station_name: 'Trạm MVP',
+        price_per_hour: 10000,
+        overtime_price_per_hour: 15000,
+        min_rental_hours: 1,
+        max_rental_hours: 24,
+        reservation_hold_seconds: 120,
+      };
+      setSettings(settingsData || defaultSettings);
+      setSettingsDraft(settingsData || defaultSettings);
+      setStations(stationData || []);
       setNewLocker((current) => ({
         ...current,
-        station_name: stationData.length > 0 ? stationData[0].name : (settingsData.station_name || current.station_name),
+        station_name: stationData && stationData.length > 0 ? stationData[0].name : ((settingsData || defaultSettings).station_name || current.station_name),
       }));
       if (selectedLocker) {
         setSelectedLocker(lockerData.find((locker) => locker.id === selectedLocker.id) || null);
@@ -610,7 +620,7 @@ export default function AdminUI() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => navigate(`/admin/${tab.id}`)}
               className={`flex flex-1 items-center justify-center gap-2 rounded-md py-3 text-sm font-extrabold transition-all duration-200 ${
                 isActive
                   ? 'bg-brand-600 text-white shadow-md'
@@ -1010,7 +1020,12 @@ export default function AdminUI() {
 
           {/* Station Management Panel */}
           <div className="mt-6">
-            <StationManager token={token} />
+            <StationManager
+              token={token}
+              stations={stations}
+              onRefresh={() => loadAll()}
+              setMessage={setMessage}
+            />
           </div>
         </>
       )}
