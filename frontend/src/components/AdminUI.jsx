@@ -789,7 +789,13 @@ export default function AdminUI() {
               >
                 <div className="flex items-start justify-between gap-2 w-full">
                   <div className="text-lg font-extrabold text-slate-800">{locker.name}</div>
-                  <LockKeyhole className={`h-4 w-4 ${selectedFreshLocker?.id === locker.id ? 'text-brand-600' : 'text-slate-400'}`} />
+                  {locker.unlocking ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                  ) : locker.locked === 0 ? (
+                    <DoorOpen className="h-4 w-4 text-emerald-500" />
+                  ) : (
+                    <DoorClosed className="h-4 w-4 text-slate-400" />
+                  )}
                 </div>
                 <div className="mt-4">
                   <Badge status={locker.reservation_stage || locker.status} label={locker.status_label} hint={locker.status_hint} />
@@ -1035,6 +1041,22 @@ export default function AdminUI() {
                     label: selectedFreshLocker.status_label, 
                     hint: selectedFreshLocker.status_hint 
                   }).hint}
+                </div>
+                <div className="mt-4 pt-3 border-t border-brand-100/50 flex items-center justify-between text-xs">
+                  <span className="font-extrabold text-slate-400 uppercase">Cửa vật lý (IoT):</span>
+                  {selectedFreshLocker.unlocking ? (
+                    <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-2 py-0.5 font-bold text-amber-700">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Đang mở khóa...
+                    </span>
+                  ) : selectedFreshLocker.locked === 0 ? (
+                    <span className="inline-flex items-center gap-1 rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 font-bold text-emerald-700">
+                      <DoorOpen className="h-3 w-3" /> Cửa đang mở
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded bg-slate-50 border border-slate-200 px-2 py-0.5 font-bold text-slate-600">
+                      <DoorClosed className="h-3 w-3" /> Cửa đã đóng
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -4,6 +4,7 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  DoorClosed,
   DoorOpen,
   Loader2,
   LockKeyhole,
@@ -438,7 +439,13 @@ export default function KioskUI() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="text-lg font-extrabold">{locker.name}</div>
-                  <LockKeyhole className="h-5 w-5 text-slate-400" />
+                  {locker.unlocking ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+                  ) : locker.locked === 0 ? (
+                    <DoorOpen className="h-5 w-5 text-emerald-500" />
+                  ) : (
+                    <DoorClosed className="h-5 w-5 text-slate-400" />
+                  )}
                 </div>
                 <div className={`mt-5 inline-flex rounded-md border px-2 py-1 text-xs font-extrabold ${meta.className}`}>
                   {meta.label}
@@ -463,9 +470,26 @@ export default function KioskUI() {
             </button>
 
             {/* Header */}
-            <div className="mb-4 border-b border-brand-100 pb-3">
-              <div className="text-xs font-extrabold uppercase text-slate-400">Phiên thao tác</div>
-              <div className="text-xl font-extrabold text-slate-950">{selectedLocker.name}</div>
+            <div className="mb-4 border-b border-brand-100 pb-3 flex items-center justify-between">
+              <div>
+                <div className="text-xs font-extrabold uppercase text-slate-400">Phiên thao tác</div>
+                <div className="text-xl font-extrabold text-slate-950">{selectedLocker.name}</div>
+              </div>
+              <div className="text-xs">
+                {selectedLocker.unlocking ? (
+                  <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-2 py-0.5 font-bold text-amber-700">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Đang mở...
+                  </span>
+                ) : selectedLocker.locked === 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 font-bold text-emerald-700">
+                    <DoorOpen className="h-3 w-3" /> Cửa đang mở
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded bg-slate-50 border border-slate-200 px-2 py-0.5 font-bold text-slate-600">
+                    <DoorClosed className="h-3 w-3" /> Cửa đã đóng
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Scrollable Body */}

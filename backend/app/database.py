@@ -80,6 +80,8 @@ def init_db():
     """)
     _ensure_column(conn, "lockers", "station_name", "TEXT DEFAULT 'Trạm MVP'")
     _ensure_column(conn, "lockers", "is_active", "INTEGER DEFAULT 1")
+    _ensure_column(conn, "lockers", "locked", "INTEGER DEFAULT 1")
+    _ensure_column(conn, "lockers", "unlocking", "INTEGER DEFAULT 0")
     _ensure_column(conn, "rentals", "phone", "TEXT")
     _ensure_column(conn, "rentals", "access_code", "TEXT")
     _ensure_column(conn, "rentals", "otp_code", "TEXT")

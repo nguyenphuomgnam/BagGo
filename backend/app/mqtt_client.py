@@ -3,6 +3,7 @@ import json
 import asyncio
 import threading
 from app.websocket_manager import manager
+from app.database import get_db
 
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
@@ -18,6 +19,18 @@ def on_message(client, userdata, msg):
         locker_id = int(topic.split('/')[1])
         data = json.loads(payload)
         print(f"Status from locker {locker_id}: {payload}")
+        
+        # Save to database
+        conn = get_db()
+        locked_val = 1 if data.get("locked") else 0
+        unlocking_val = 1 if data.get("unlocking") else 0
+        conn.execute(
+            "UPDATE lockers SET locked = ?, unlocking = ? WHERE id = ?",
+            (locked_val, unlocking_val, locker_id)
+        )
+        conn.commit()
+        conn.close()
+
         asyncio.run(manager.broadcast(json.dumps({
             "type": "locker_status",
             "locker_id": locker_id,

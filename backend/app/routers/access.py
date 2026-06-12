@@ -392,6 +392,8 @@ def get_customer_rentals(phone: str = Depends(require_customer_phone)):
         SELECT
             r.*,
             l.name AS locker_name,
+            l.locked AS locker_locked,
+            l.unlocking AS locker_unlocking,
             CASE WHEN fa.rental_id IS NULL THEN 0 ELSE 1 END AS has_face
         FROM rentals r
         JOIN lockers l ON r.locker_id = l.id

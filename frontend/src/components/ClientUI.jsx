@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Bell,
   Clock,
+  DoorClosed,
   DoorOpen,
   Loader2,
   LockKeyhole,
@@ -108,6 +109,24 @@ function LockerActionModal({ rental, onCancel, onBlink, onExtend, onTempOpen, on
             {rental.status_label || 'Phiên chưa hoàn tất'}: hãy hoàn tất thao tác và thanh toán tại kiosk.
           </div>
         )}
+
+        {/* Physical door status (IoT) */}
+        <div className="rounded-lg border border-brand-100 bg-brand-50/30 px-3 py-2 flex items-center justify-between text-xs">
+          <span className="font-extrabold text-slate-400">Trạng thái chốt (IoT):</span>
+          {rental.locker_unlocking ? (
+            <span className="inline-flex items-center gap-1 font-bold text-amber-700">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" /> Đang mở khóa...
+            </span>
+          ) : rental.locker_locked === 0 ? (
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-700">
+              <DoorOpen className="h-3.5 w-3.5" /> Cửa đang mở
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 font-bold text-slate-500">
+              <DoorClosed className="h-3.5 w-3.5" /> Cửa đã đóng
+            </span>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-brand-100">
           <button
@@ -443,7 +462,13 @@ export default function ClientUI() {
                 <h2 className="mt-1 text-2xl font-extrabold">{rental.locker_name || `Ngăn ${rental.locker_id}`}</h2>
               </div>
               <div className="rounded-lg border border-brand-100 bg-brand-50 p-3">
-                <LockKeyhole className="h-5 w-5 text-slate-500" />
+                {rental.locker_unlocking ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+                ) : rental.locker_locked === 0 ? (
+                  <DoorOpen className="h-5 w-5 text-emerald-500" />
+                ) : (
+                  <DoorClosed className="h-5 w-5 text-slate-500" />
+                )}
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
