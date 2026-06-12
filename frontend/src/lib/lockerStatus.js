@@ -2,7 +2,7 @@ const STATUS_META = {
   AVAILABLE: {
     label: 'Trống',
     hint: 'Sẵn sàng nhận hành lý',
-    className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    className: 'border-brand-200 bg-brand-50 text-brand-700',
   },
   RESERVED: {
     label: 'Giữ chỗ',
@@ -37,12 +37,12 @@ const STATUS_META = {
   COMPLETED: {
     label: 'Hoàn tất',
     hint: 'Phiên đã kết thúc',
-    className: 'border-slate-200 bg-slate-50 text-slate-600',
+    className: 'border-brand-100 bg-white text-slate-600',
   },
   CANCELLED: {
     label: 'Đã hủy',
     hint: 'Phiên đăng ký đã bị hủy',
-    className: 'border-slate-200 bg-slate-50 text-slate-600',
+    className: 'border-brand-100 bg-white text-slate-600',
   },
 };
 

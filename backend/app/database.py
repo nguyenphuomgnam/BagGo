@@ -21,6 +21,8 @@ def init_db():
             id INTEGER PRIMARY KEY,
             name TEXT NOT NULL,
             status TEXT DEFAULT 'AVAILABLE',
+            station_name TEXT DEFAULT 'Trạm MVP',
+            is_active INTEGER DEFAULT 1,
             last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         INSERT OR IGNORE INTO lockers (id, name, status) VALUES (1, 'Ngăn 1', 'AVAILABLE');
@@ -69,7 +71,15 @@ def init_db():
             detail TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
     """)
+    _ensure_column(conn, "lockers", "station_name", "TEXT DEFAULT 'Trạm MVP'")
+    _ensure_column(conn, "lockers", "is_active", "INTEGER DEFAULT 1")
     _ensure_column(conn, "rentals", "phone", "TEXT")
     _ensure_column(conn, "rentals", "access_code", "TEXT")
     _ensure_column(conn, "rentals", "otp_code", "TEXT")
@@ -78,5 +88,18 @@ def init_db():
     _ensure_column(conn, "rentals", "returned_at", "TIMESTAMP")
     conn.execute("UPDATE rentals SET payment_status = 'PAID' WHERE payment_status IS NULL AND status IN ('OCCUPIED','OVERTIME','COMPLETED')")
     conn.execute("UPDATE rentals SET payment_status = 'PENDING' WHERE payment_status IS NULL")
+    defaults = {
+        "station_name": "Trạm MVP",
+        "price_per_hour": "10000",
+        "overtime_price_per_hour": "15000",
+        "min_rental_hours": "1",
+        "max_rental_hours": "24",
+        "reservation_hold_seconds": os.getenv("RESERVATION_HOLD_SECONDS", "120"),
+    }
+    for key, value in defaults.items():
+        conn.execute(
+            "INSERT OR IGNORE INTO app_settings (key, value) VALUES (?, ?)",
+            (key, value),
+        )
     conn.commit()
     conn.close()

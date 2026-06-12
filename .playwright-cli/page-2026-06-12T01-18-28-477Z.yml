@@ -1,0 +1,48 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - img "BAGGO Smart Locker" [ref=e7]
+      - navigation [ref=e8]:
+        - link "Kiosk" [ref=e9] [cursor=pointer]:
+          - /url: /kiosk
+          - img [ref=e10]
+          - text: Kiosk
+        - link "Khách hàng" [ref=e14] [cursor=pointer]:
+          - /url: /customer
+          - img [ref=e15]
+          - text: Khách hàng
+        - link "Admin" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e18]
+          - text: Admin
+  - main [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - img [ref=e27]
+        - heading "Admin BAGGO" [level=1] [ref=e29]
+        - paragraph [ref=e30]: Dùng mật khẩu từ biến môi trường ADMIN_PASSWORD. Nếu chưa cấu hình, backend dùng mật khẩu demo.
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - text: Mật khẩu
+            - textbox "Mật khẩu" [ref=e33]:
+              - /placeholder: admin123
+          - button "Đăng nhập" [ref=e34] [cursor=pointer]
+      - generic [ref=e35]:
+        - heading "Quản trị MVP" [level=2] [ref=e36]
+        - generic [ref=e37]:
+          - generic [ref=e38]:
+            - img [ref=e39]
+            - generic [ref=e42]: Theo dõi real-time
+            - paragraph [ref=e43]: Tủ đổi trạng thái qua WebSocket khi backend nhận MQTT hoặc lệnh vận hành.
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - generic [ref=e48]: Phiên thuê và doanh thu
+            - paragraph [ref=e49]: Bảng lấy trực tiếp từ SQLite, không còn chart dữ liệu giả.
+          - generic [ref=e50]:
+            - img [ref=e51]
+            - generic [ref=e54]: Can thiệp IoT
+            - paragraph [ref=e55]: Mở, đóng, giải phóng cưỡng chế có log đầy đủ.
+          - generic [ref=e56]:
+            - img [ref=e57]
+            - generic [ref=e60]: Audit log
+            - paragraph [ref=e61]: Ghi nhận reserve, payment, OTP, mở tủ và thao tác admin.

@@ -6,6 +6,7 @@ from typing import Any
 
 from app.database import get_db
 from app.services.locker_state import decorate_rental_row
+from app.services.settings_service import calculate_rental_amounts, get_app_settings
 
 ACTIVE_RENTAL_STATUSES = ("RESERVED", "OCCUPIED", "OVERTIME")
 PRICE_PER_HOUR = 10000
@@ -58,6 +59,15 @@ def format_time_left(end_time: Any) -> dict:
 def rental_to_dict(row) -> dict:
     data = dict(row)
     data.update(format_time_left(data.get("end_time")))
+    data.update(calculate_rental_amounts(data))
+    if data.get("status") == "COMPLETED":
+        data["time_left"] = "Đã kết thúc"
+        data["time_left_seconds"] = 0
+        data["is_overtime"] = False
+    if data.get("status") == "CANCELLED":
+        data["time_left"] = "Đã hủy"
+        data["time_left_seconds"] = 0
+        data["is_overtime"] = False
     return decorate_rental_row(data)
 
 
@@ -132,7 +142,8 @@ def cancel_pending_reservation(rental_id: int, actor: str = "customer", detail: 
 
 
 def expire_pending_reservations():
-    if RESERVATION_HOLD_SECONDS <= 0:
+    hold_seconds = get_app_settings()["reservation_hold_seconds"]
+    if hold_seconds <= 0:
         return []
 
     now = datetime.datetime.now()
@@ -152,14 +163,14 @@ def expire_pending_reservations():
         if start_time is None:
             continue
         age_seconds = int((now - start_time).total_seconds())
-        if age_seconds < RESERVATION_HOLD_SECONDS:
+        if age_seconds < hold_seconds:
             continue
 
         locker_id = _cancel_pending_rental_in_tx(
             conn,
             rental,
             "system",
-            f"Tự hủy phiên giữ chỗ #{rental['id']} sau {RESERVATION_HOLD_SECONDS} giây chưa thanh toán",
+            f"Tự hủy phiên giữ chỗ #{rental['id']} sau {hold_seconds} giây chưa thanh toán",
         )
         expired_locker_ids.append(locker_id)
 
@@ -173,6 +184,49 @@ def expire_pending_reservations():
             update_locker_status(locker_id, "AVAILABLE")
 
     return expired_locker_ids
+
+
+def sync_overtime_sessions():
+    now = datetime.datetime.now()
+    conn = get_db()
+    rows = conn.execute(
+        """
+        SELECT r.*, l.status AS locker_status
+        FROM rentals r
+        JOIN lockers l ON l.id = r.locker_id
+        WHERE r.status = 'OCCUPIED'
+        """
+    ).fetchall()
+
+    overtime_locker_ids = []
+    for rental in rows:
+        end_time = parse_db_datetime(rental["end_time"])
+        if end_time is None or end_time >= now:
+            continue
+
+        conn.execute("UPDATE rentals SET status = 'OVERTIME' WHERE id = ?", (rental["id"],))
+        if rental["locker_status"] == "OCCUPIED":
+            overtime_locker_ids.append(rental["locker_id"])
+        conn.execute(
+            "INSERT INTO action_logs (locker_id, actor, action, detail) VALUES (?, ?, ?, ?)",
+            (
+                rental["locker_id"],
+                "system",
+                "OVERTIME",
+                f"Phiên #{rental['id']} quá hạn từ {rental['end_time']}",
+            ),
+        )
+
+    conn.commit()
+    conn.close()
+
+    if overtime_locker_ids:
+        from app.services.locker_service import update_locker_status
+
+        for locker_id in overtime_locker_ids:
+            update_locker_status(locker_id, "OVERTIME")
+
+    return overtime_locker_ids
 
 
 def get_active_rental_for_locker(conn, locker_id: int):

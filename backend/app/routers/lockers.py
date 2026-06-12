@@ -1,13 +1,14 @@
 from fastapi import APIRouter
 from app.database import get_db
 from app.services.locker_state import decorate_locker_row
-from app.services.rental_service import expire_pending_reservations
+from app.services.rental_service import expire_pending_reservations, sync_overtime_sessions
 
 router = APIRouter()
 
 @router.get("/lockers")
 def get_lockers():
     expire_pending_reservations()
+    sync_overtime_sessions()
     conn = get_db()
     rows = conn.execute(
         """
@@ -27,6 +28,7 @@ def get_lockers():
             LIMIT 1
         )
         LEFT JOIN face_embeddings_active fa ON fa.rental_id = r.id
+        WHERE COALESCE(l.is_active, 1) = 1
         ORDER BY l.id
         """
     ).fetchall()

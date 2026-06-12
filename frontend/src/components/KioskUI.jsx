@@ -10,8 +10,9 @@ import {
   RotateCcw,
   ShieldCheck,
   Smartphone,
+  X,
 } from 'lucide-react';
-import { api, makeWs } from '../lib/api';
+import { api, subscribeWs } from '../lib/api';
 import { getLockerStatusMeta } from '../lib/lockerStatus';
 
 function money(value) {
@@ -23,8 +24,8 @@ function Message({ type = 'info', children }) {
   const tone = type === 'error'
     ? 'border-rose-200 bg-rose-50 text-rose-700'
     : type === 'success'
-      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-      : 'border-slate-200 bg-white text-slate-700';
+      ? 'border-brand-200 bg-brand-50 text-brand-700'
+      : 'border-brand-100 bg-white text-slate-700';
   return <div className={`rounded-lg border px-4 py-3 text-sm font-semibold ${tone}`}>{children}</div>;
 }
 
@@ -41,6 +42,14 @@ function PaymentQr() {
 
 export default function KioskUI() {
   const [lockers, setLockers] = useState([]);
+  const [config, setConfig] = useState({
+    station_name: 'Trạm MVP',
+    price_per_hour: 10000,
+    overtime_price_per_hour: 15000,
+    min_rental_hours: 1,
+    max_rental_hours: 24,
+    reservation_hold_seconds: 120,
+  });
   const [flow, setFlow] = useState('store');
   const [step, setStep] = useState('select');
   const [selectedLocker, setSelectedLocker] = useState(null);
@@ -50,8 +59,10 @@ export default function KioskUI() {
   const [otp, setOtp] = useState('');
   const [otpHint, setOtpHint] = useState('');
   const [message, setMessage] = useState({ type: 'info', text: '' });
+  const [overtimeAction, setOvertimeAction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [countdown, setCountdown] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -61,26 +72,45 @@ export default function KioskUI() {
     [lockers],
   );
 
+  const hoursOptions = useMemo(() => {
+    const candidates = [1, 2, 4, 8, 12, 24, 48]
+      .filter((value) => value >= config.min_rental_hours && value <= config.max_rental_hours);
+    if (!candidates.includes(config.min_rental_hours)) candidates.unshift(config.min_rental_hours);
+    if (!candidates.includes(config.max_rental_hours)) candidates.push(config.max_rental_hours);
+    return [...new Set(candidates)].sort((a, b) => a - b);
+  }, [config.max_rental_hours, config.min_rental_hours]);
+
+  const hourlyPrice = config.price_per_hour || 10000;
+
   async function loadLockers() {
     try {
       const data = await api.getLockers();
       setLockers(data);
-      if (selectedLocker) {
-        const fresh = data.find((locker) => locker.id === selectedLocker.id);
-        if (fresh) setSelectedLocker(fresh);
-      }
+      setSelectedLocker((current) => {
+        if (!current) return null;
+        return data.find((locker) => locker.id === current.id) || null;
+      });
     } catch (err) {
       setMessage({ type: 'error', text: err.message });
     }
   }
 
+  async function loadConfig() {
+    try {
+      const data = await api.getPublicConfig();
+      setConfig(data);
+      setHours((current) => Math.min(Math.max(current, data.min_rental_hours), data.max_rental_hours));
+    } catch (err) {
+      console.warn('load config failed', err);
+    }
+  }
+
   useEffect(() => {
     loadLockers();
-    const ws = makeWs();
-    ws.onmessage = () => loadLockers();
-    ws.onerror = () => {};
+    loadConfig();
+    const unsubscribe = subscribeWs(() => loadLockers());
     return () => {
-      ws.close();
+      unsubscribe();
       stopCamera();
     };
   }, []);
@@ -92,6 +122,37 @@ export default function KioskUI() {
       stopCamera();
     }
   }, [step]);
+
+  useEffect(() => {
+    if (step === 'face-register' || step === 'face-identify') {
+      if (cameraActive) {
+        setCountdown(5);
+      } else {
+        setCountdown(null);
+      }
+    } else {
+      setCountdown(null);
+    }
+  }, [step, cameraActive]);
+
+  useEffect(() => {
+    if (countdown === null || loading) return;
+
+    if (countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown((c) => (c !== null ? c - 1 : null));
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+
+    if (countdown === 0 && cameraActive) {
+      if (step === 'face-register') {
+        registerFace();
+      } else if (step === 'face-identify') {
+        identifyFace();
+      }
+    }
+  }, [countdown, step, cameraActive, loading]);
 
   async function startCamera() {
     if (streamRef.current) return;
@@ -149,7 +210,7 @@ export default function KioskUI() {
   }
 
   async function reset() {
-    await cancelPendingReservation();
+    cancelPendingReservation();
     setStep('select');
     setSelectedLocker(null);
     setPhone('');
@@ -157,6 +218,7 @@ export default function KioskUI() {
     setRental(null);
     setOtp('');
     setOtpHint('');
+    setOvertimeAction(null);
     setMessage({ type: 'info', text: '' });
     loadLockers();
   }
@@ -277,7 +339,7 @@ export default function KioskUI() {
     }
   }
 
-  async function tempOpen() {
+  async function executeTempOpen() {
     setLoading(true);
     try {
       await api.tempOpen(rental.rental_id);
@@ -287,10 +349,11 @@ export default function KioskUI() {
       setMessage({ type: 'error', text: err.message });
     } finally {
       setLoading(false);
+      setOvertimeAction(null);
     }
   }
 
-  async function returnLocker() {
+  async function executeReturnLocker() {
     setLoading(true);
     try {
       await api.returnLocker(rental.rental_id);
@@ -301,24 +364,43 @@ export default function KioskUI() {
       setMessage({ type: 'error', text: err.message });
     } finally {
       setLoading(false);
+      setOvertimeAction(null);
+    }
+  }
+
+  function tempOpen() {
+    if (rental?.overtime_fee > 0 || rental?.is_overtime) {
+      setOvertimeAction('temp-open');
+      setStep('overtime-payment');
+    } else {
+      executeTempOpen();
+    }
+  }
+
+  function returnLocker() {
+    if (rental?.overtime_fee > 0 || rental?.is_overtime) {
+      setOvertimeAction('return');
+      setStep('overtime-payment');
+    } else {
+      executeReturnLocker();
     }
   }
 
   const buttonBusy = loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null;
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="w-full space-y-5">
+      <section className="baggo-surface rounded-lg border p-5">
+        <div className="flex flex-col items-center gap-4 text-center">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight">Kiosk tại tủ BAGGO</h1>
             <p className="mt-1 text-sm font-medium text-slate-500">
-              {availableCount}/{lockers.length || 0} ngăn trống. Chọn thao tác rồi chọn ngăn.
+              {config.station_name} - {availableCount}/{lockers.length || 0} ngăn trống. Chọn thao tác rồi chọn ngăn.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 bg-slate-50 p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-lg border border-brand-100 bg-brand-50 p-1">
             <button
-              className={`rounded-md px-4 py-2 text-sm font-extrabold ${flow === 'store' ? 'bg-slate-900 text-white' : 'text-slate-600'}`}
+              className={`rounded-md px-4 py-2 text-sm font-extrabold ${flow === 'store' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-700'}`}
               onClick={() => {
                 setFlow('store');
                 reset();
@@ -327,7 +409,7 @@ export default function KioskUI() {
               Gửi đồ
             </button>
             <button
-              className={`rounded-md px-4 py-2 text-sm font-extrabold ${flow === 'retrieve' ? 'bg-slate-900 text-white' : 'text-slate-600'}`}
+              className={`rounded-md px-4 py-2 text-sm font-extrabold ${flow === 'retrieve' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-700'}`}
               onClick={() => {
                 setFlow('retrieve');
                 reset();
@@ -351,8 +433,8 @@ export default function KioskUI() {
                 key={locker.id}
                 onClick={() => chooseLocker(locker)}
                 className={`min-h-32 rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${
-                  selected ? 'border-slate-900 ring-2 ring-slate-900/10' : 'border-slate-200'
-                } ${locker.status === 'AVAILABLE' ? 'bg-white' : 'bg-slate-50'}`}
+                  selected ? 'border-brand-600 ring-2 ring-brand-600/15 bg-brand-50' : 'border-brand-100 bg-white'
+                } ${locker.status === 'AVAILABLE' ? '' : 'bg-brand-50/60'}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="text-lg font-extrabold">{locker.name}</div>
@@ -368,192 +450,240 @@ export default function KioskUI() {
         </div>
       </section>
 
-      <aside className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-          <div>
-            <div className="text-xs font-extrabold uppercase text-slate-400">Phiên thao tác</div>
-            <div className="text-lg font-extrabold">{selectedLocker ? selectedLocker.name : 'Chưa chọn ngăn'}</div>
-          </div>
-          <button onClick={reset} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-600">
-            <RotateCcw className="h-4 w-4" />
-            Làm mới
-          </button>
-        </div>
-
-        <Message type={message.type}>{message.text}</Message>
-
-        {step === 'select' && (
-          <div className="mt-4 space-y-4 text-sm font-medium text-slate-600">
-            <p>Gửi đồ: chọn ngăn trống để bắt đầu đăng ký.</p>
-            <p>Nhận đồ: chọn ngăn đang dùng, sau đó xác thực bằng Face ID hoặc OTP dự phòng.</p>
-          </div>
-        )}
-
-        {step === 'details' && (
-          <div className="mt-4 space-y-4">
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">Số điện thoại</span>
-              <input
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3 text-base font-semibold outline-none focus:border-slate-900"
-                inputMode="tel"
-                placeholder="Ví dụ: 0901234567"
-              />
-            </label>
-            <div>
-              <div className="text-sm font-bold text-slate-700">Thời gian thuê</div>
-              <div className="mt-2 grid grid-cols-4 gap-2">
-                {[1, 2, 4, 8].map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => setHours(item)}
-                    className={`rounded-lg border px-3 py-3 text-sm font-extrabold ${hours === item ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 text-slate-600'}`}
-                  >
-                    {item}h
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-              <span className="text-sm font-bold text-slate-500">Tạm tính</span>
-              <span className="text-xl font-extrabold">{money(hours * 10000)}</span>
-            </div>
+      {/* Modal Popup for Kiosk Actions */}
+      {selectedLocker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 overflow-y-auto">
+          <div className="baggo-surface w-full max-w-md rounded-xl border p-6 shadow-2xl relative bg-white flex flex-col max-h-[90vh]">
+            {/* Close button */}
             <button
-              disabled={loading}
-              onClick={reserve}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 font-extrabold text-white disabled:opacity-60"
+              onClick={reset}
+              className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
             >
-              {buttonBusy}
-              Tiếp tục Face ID
+              <X className="h-6 w-6" />
             </button>
-          </div>
-        )}
 
-        {(step === 'face-register' || step === 'face-identify') && (
-          <div className="mt-4 space-y-4">
-            <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950">
-              <video ref={videoRef} autoPlay playsInline className="aspect-square w-full object-cover" />
-              <canvas ref={canvasRef} className="hidden" />
+            {/* Header */}
+            <div className="mb-4 border-b border-brand-100 pb-3">
+              <div className="text-xs font-extrabold uppercase text-slate-400">Phiên thao tác</div>
+              <div className="text-xl font-extrabold text-slate-950">{selectedLocker.name}</div>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <button
-                disabled={loading || !cameraActive}
-                onClick={step === 'face-register' ? registerFace : identifyFace}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 font-extrabold text-white disabled:opacity-60"
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                {step === 'face-register' ? 'Lưu Face ID' : 'Quét Face ID'}
-              </button>
-              {step === 'face-register' && (
-                <button
-                  onClick={() => {
-                    setStep('payment');
-                    setMessage({ type: 'info', text: 'Bạn sẽ dùng SĐT + OTP nếu cần nhận đồ dự phòng.' });
-                  }}
-                  className="rounded-lg border border-slate-200 px-4 py-3 font-extrabold text-slate-700"
-                >
-                  Dùng OTP
-                </button>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto pr-1">
+              <Message type={message.type}>{message.text}</Message>
+
+              {step === 'select' && (
+                <div className="mt-4 space-y-4 text-sm font-medium text-slate-600">
+                  <p>Gửi đồ: chọn ngăn trống để bắt đầu đăng ký.</p>
+                  <p>Nhận đồ: chọn ngăn đang dùng, sau đó xác thực bằng Face ID hoặc OTP dự phòng.</p>
+                </div>
+              )}
+
+              {step === 'details' && (
+                <div className="mt-4 space-y-4">
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-700">Số điện thoại</span>
+                    <input
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value)}
+                      className="mt-2 w-full rounded-lg border border-brand-100 px-3 py-3 text-base font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20"
+                      inputMode="tel"
+                      placeholder="Ví dụ: 0901234567"
+                    />
+                  </label>
+                  <div>
+                    <div className="text-sm font-bold text-slate-700">Thời gian thuê</div>
+                    <div className="mt-2 grid grid-cols-4 gap-2">
+                      {hoursOptions.map((item) => (
+                        <button
+                          key={item}
+                          onClick={() => setHours(item)}
+                          className={`rounded-lg border px-3 py-3 text-sm font-extrabold ${hours === item ? 'border-brand-600 bg-brand-600 text-white' : 'border-brand-100 bg-white text-slate-700'}`}
+                        >
+                          {item}h
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-brand-100 bg-brand-50 px-4 py-3">
+                    <span className="text-sm font-bold text-slate-500">Tạm tính</span>
+                    <span className="text-xl font-extrabold">{money(hours * hourlyPrice)}</span>
+                  </div>
+                  <div className="text-xs font-semibold text-slate-500">Giá hiện tại: {money(hourlyPrice)}/giờ</div>
+                  <button
+                    disabled={loading}
+                    onClick={reserve}
+                    className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold disabled:opacity-60"
+                  >
+                    {buttonBusy}
+                    Tiếp tục Face ID
+                  </button>
+                </div>
+              )}
+
+              {(step === 'face-register' || step === 'face-identify') && (
+                <div className="mt-4 space-y-4">
+                  <div className="overflow-hidden rounded-lg border border-slate-200 bg-slate-950">
+                    <video ref={videoRef} autoPlay playsInline className="aspect-square w-full object-cover" />
+                    <canvas ref={canvasRef} className="hidden" />
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <button
+                      disabled={loading || !cameraActive}
+                      onClick={step === 'face-register' ? registerFace : identifyFace}
+                      className="baggo-primary inline-flex flex-1 items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold disabled:opacity-60"
+                    >
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                      {loading ? (
+                        step === 'face-register' ? 'Đang lưu Face ID...' : 'Đang đối chiếu Face ID...'
+                      ) : (
+                        `${step === 'face-register' ? 'Lưu Face ID' : 'Quét Face ID'} ${countdown !== null ? `(Tự động sau ${countdown}s)` : ''}`
+                      )}
+                    </button>
+                    {step === 'face-register' && (
+                      <button
+                        onClick={() => {
+                          setStep('payment');
+                          setMessage({ type: 'info', text: 'Bạn sẽ dùng SĐT + OTP nếu cần nhận đồ dự phòng.' });
+                        }}
+                        className="rounded-lg border border-brand-100 bg-white px-4 py-3 font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                      >
+                        Dùng OTP
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {step === 'payment' && (
+                <div className="mt-4 space-y-4">
+                  <div className="flex flex-col items-center gap-4 rounded-lg border border-brand-100 bg-brand-50 p-5">
+                    <PaymentQr />
+                    <div className="text-center">
+                      <div className="text-sm font-bold text-slate-500">VietQR demo</div>
+                      <div className="text-2xl font-extrabold">{money(rental?.price)}</div>
+                    </div>
+                  </div>
+                  <button
+                    disabled={loading}
+                    onClick={confirmPayment}
+                    className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold disabled:opacity-60"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                    Xác nhận đã thanh toán
+                  </button>
+                </div>
+              )}
+
+              {step === 'otp' && (
+                <div className="mt-4 space-y-4">
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-700">Số điện thoại đã đăng ký</span>
+                    <input
+                      value={phone}
+                      onChange={(event) => setPhone(event.target.value)}
+                      className="mt-2 w-full rounded-lg border border-brand-100 px-3 py-3 text-base font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20"
+                      inputMode="tel"
+                    />
+                  </label>
+                  <button onClick={requestOtp} disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-4 py-3 font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700">
+                    <Smartphone className="h-4 w-4" />
+                    Tạo OTP dự phòng
+                  </button>
+                  {otpHint && <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">{otpHint}</div>}
+                  <label className="block">
+                    <span className="text-sm font-bold text-slate-700">OTP</span>
+                    <input
+                      value={otp}
+                      onChange={(event) => setOtp(event.target.value)}
+                      className="mt-2 w-full rounded-lg border border-brand-100 px-3 py-3 text-center text-xl font-extrabold tracking-widest outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20"
+                      inputMode="numeric"
+                      placeholder="000000"
+                    />
+                  </label>
+                  <button onClick={verifyOtp} disabled={loading} className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold disabled:opacity-60">
+                    {buttonBusy}
+                    Xác thực OTP
+                  </button>
+                </div>
+              )}
+
+              {step === 'actions' && (
+                <div className="mt-4 space-y-4">
+                  <div className="rounded-lg border border-brand-100 bg-brand-50 p-4">
+                    <div className="text-sm font-bold text-slate-500">Phiên #{rental?.rental_id}</div>
+                    <div className="mt-1 text-xl font-extrabold">Ngăn {rental?.locker_id}</div>
+                    <div className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-slate-600">
+                      <Clock className="h-4 w-4" />
+                      {rental?.time_left || 'Đang hoạt động'}
+                    </div>
+                  </div>
+                  <button onClick={tempOpen} disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-brand-100 bg-white px-4 py-3 font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700">
+                    <DoorOpen className="h-4 w-4" />
+                    Mở tạm thời
+                  </button>
+                  <button onClick={returnLocker} disabled={loading} className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold">
+                    <ShieldCheck className="h-4 w-4" />
+                    Trả tủ và kết thúc
+                  </button>
+                </div>
+              )}
+
+              {step === 'overtime-payment' && (
+                <div className="mt-4 space-y-4">
+                  <div className="flex flex-col items-center gap-4 rounded-lg border border-amber-200 bg-amber-50 p-5">
+                    <PaymentQr />
+                    <div className="text-center">
+                      <div className="text-sm font-bold text-amber-700">VietQR Thanh toán quá giờ</div>
+                      <div className="text-2xl font-extrabold text-slate-900">{money(rental?.overtime_fee)}</div>
+                      <p className="mt-2 text-xs font-semibold text-slate-500">Quét mã QR để thanh toán phí quá hạn trước khi tủ mở.</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => {
+                        setStep('actions');
+                        setOvertimeAction(null);
+                      }}
+                      className="rounded-lg border border-brand-100 bg-white px-4 py-3 font-extrabold text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      disabled={loading}
+                      onClick={overtimeAction === 'temp-open' ? executeTempOpen : executeReturnLocker}
+                      className="baggo-primary inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 font-extrabold disabled:opacity-60"
+                    >
+                      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      Xác nhận đã thanh toán
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {step === 'success' && (
+                <div className="mt-4 space-y-4">
+                  <div className="rounded-lg border border-brand-200 bg-brand-50 p-4 text-brand-800">
+                    <CheckCircle2 className="mb-3 h-8 w-8" />
+                    <div className="text-lg font-extrabold">Tủ đã mở</div>
+                    <p className="mt-1 text-sm font-semibold">Hãy cất hành lý, đóng chặt cửa và giữ SĐT/OTP để nhận đồ khi cần.</p>
+                  </div>
+                  <button onClick={reset} className="baggo-primary w-full rounded-lg px-4 py-3 font-extrabold">Hoàn tất</button>
+                </div>
+              )}
+
+              {step === 'done' && (
+                <div className="mt-4 space-y-4">
+                  <div className="rounded-lg border border-brand-100 bg-brand-50 p-4 text-sm font-semibold text-slate-700">
+                    Thao tác đã gửi đến hệ thống IoT. Kiểm tra cửa tủ trước khi rời kiosk.
+                  </div>
+                  <button onClick={reset} className="baggo-primary w-full rounded-lg px-4 py-3 font-extrabold">Về màn hình chính</button>
+                </div>
               )}
             </div>
           </div>
-        )}
-
-        {step === 'payment' && (
-          <div className="mt-4 space-y-4">
-            <div className="flex flex-col items-center gap-4 rounded-lg border border-slate-200 bg-slate-50 p-5">
-              <PaymentQr />
-              <div className="text-center">
-                <div className="text-sm font-bold text-slate-500">VietQR demo</div>
-                <div className="text-2xl font-extrabold">{money(rental?.price)}</div>
-              </div>
-            </div>
-            <button
-              disabled={loading}
-              onClick={confirmPayment}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 font-extrabold text-white disabled:opacity-60"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              Xác nhận đã thanh toán
-            </button>
-          </div>
-        )}
-
-        {step === 'otp' && (
-          <div className="mt-4 space-y-4">
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">Số điện thoại đã đăng ký</span>
-              <input
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3 text-base font-semibold outline-none focus:border-slate-900"
-                inputMode="tel"
-              />
-            </label>
-            <button onClick={requestOtp} disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 font-extrabold text-slate-700">
-              <Smartphone className="h-4 w-4" />
-              Tạo OTP dự phòng
-            </button>
-            {otpHint && <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">{otpHint}</div>}
-            <label className="block">
-              <span className="text-sm font-bold text-slate-700">OTP</span>
-              <input
-                value={otp}
-                onChange={(event) => setOtp(event.target.value)}
-                className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3 text-center text-xl font-extrabold tracking-widest outline-none focus:border-slate-900"
-                inputMode="numeric"
-                placeholder="000000"
-              />
-            </label>
-            <button onClick={verifyOtp} disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 font-extrabold text-white disabled:opacity-60">
-              {buttonBusy}
-              Xác thực OTP
-            </button>
-          </div>
-        )}
-
-        {step === 'actions' && (
-          <div className="mt-4 space-y-4">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <div className="text-sm font-bold text-slate-500">Phiên #{rental?.rental_id}</div>
-              <div className="mt-1 text-xl font-extrabold">Ngăn {rental?.locker_id}</div>
-              <div className="mt-2 inline-flex items-center gap-2 text-sm font-bold text-slate-600">
-                <Clock className="h-4 w-4" />
-                {rental?.time_left || 'Đang hoạt động'}
-              </div>
-            </div>
-            <button onClick={tempOpen} disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-3 font-extrabold text-slate-700">
-              <DoorOpen className="h-4 w-4" />
-              Mở tạm thời
-            </button>
-            <button onClick={returnLocker} disabled={loading} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 font-extrabold text-white">
-              <ShieldCheck className="h-4 w-4" />
-              Trả tủ và kết thúc
-            </button>
-          </div>
-        )}
-
-        {step === 'success' && (
-          <div className="mt-4 space-y-4">
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800">
-              <CheckCircle2 className="mb-3 h-8 w-8" />
-              <div className="text-lg font-extrabold">Tủ đã mở</div>
-              <p className="mt-1 text-sm font-semibold">Hãy cất hành lý, đóng chặt cửa và giữ SĐT/OTP để nhận đồ khi cần.</p>
-            </div>
-            <button onClick={reset} className="w-full rounded-lg bg-slate-900 px-4 py-3 font-extrabold text-white">Hoàn tất</button>
-          </div>
-        )}
-
-        {step === 'done' && (
-          <div className="mt-4 space-y-4">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm font-semibold text-slate-700">
-              Thao tác đã gửi đến hệ thống IoT. Kiểm tra cửa tủ trước khi rời kiosk.
-            </div>
-            <button onClick={reset} className="w-full rounded-lg bg-slate-900 px-4 py-3 font-extrabold text-white">Về màn hình chính</button>
-          </div>
-        )}
-      </aside>
+        </div>
+      )}
     </div>
   );
 }

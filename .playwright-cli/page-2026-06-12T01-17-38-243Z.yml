@@ -1,0 +1,122 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - img "BAGGO Smart Locker" [ref=e7]
+      - navigation [ref=e8]:
+        - link "Kiosk" [ref=e9] [cursor=pointer]:
+          - /url: /kiosk
+          - img [ref=e10]
+          - text: Kiosk
+        - link "Khách hàng" [ref=e14] [cursor=pointer]:
+          - /url: /customer
+          - img [ref=e15]
+          - text: Khách hàng
+        - link "Admin" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e18]
+          - text: Admin
+  - main [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - heading "Dashboard vận hành- Trạm MVP" [level=1] [ref=e28]:
+            - text: Dashboard vận hành
+            - generic [ref=e29]: "- Trạm MVP"
+          - paragraph [ref=e30]: 0/0 ngăn trống, 0 phiên quá hạn.
+        - generic [ref=e31]:
+          - button "Làm mới" [ref=e32] [cursor=pointer]
+          - button "Đăng xuất" [ref=e33] [cursor=pointer]:
+            - img [ref=e34]
+            - text: Đăng xuất
+      - generic [ref=e37]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e41]: Doanh thu
+            - generic [ref=e42]: 0đ
+          - img [ref=e44]
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50]: Hôm nay
+            - generic [ref=e51]: 0đ
+          - img [ref=e53]
+        - generic [ref=e56]:
+          - generic [ref=e57]:
+            - generic [ref=e58]: Phiên hoạt động
+            - generic [ref=e59]: "0"
+          - img [ref=e61]
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - generic [ref=e69]: Tỷ lệ dùng tủ
+            - generic [ref=e70]: 0%
+          - img [ref=e72]
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - heading "Cảnh báo quá giờ" [level=2] [ref=e77]
+            - paragraph [ref=e78]: 0 phiên đang vượt thời gian. Kiểm tra trạm, ngăn và phí phát sinh.
+          - generic [ref=e79]: 0 quá hạn
+        - generic [ref=e81]: Không có phiên quá giờ.
+      - generic [ref=e82]:
+        - heading "Sơ đồ tủ" [level=2] [ref=e84]
+        - generic [ref=e85]:
+          - heading "Điều khiển IoT" [level=2] [ref=e86]
+          - generic [ref=e87]: Chọn một ngăn trong sơ đồ để vận hành.
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - generic [ref=e90]:
+              - img [ref=e91]
+              - heading "Cấu hình vận hành" [level=2] [ref=e94]
+            - generic [ref=e95]:
+              - generic [ref=e96]:
+                - text: Tên trạm
+                - textbox "Tên trạm" [ref=e97]: Trạm MVP
+              - generic [ref=e98]:
+                - text: Giá / giờ
+                - spinbutton "Giá / giờ" [ref=e99]: "10000"
+              - generic [ref=e100]:
+                - text: Phí quá giờ / giờ
+                - spinbutton "Phí quá giờ / giờ" [ref=e101]: "15000"
+              - generic [ref=e102]:
+                - text: Giờ thuê tối thiểu
+                - spinbutton "Giờ thuê tối thiểu" [ref=e103]: "1"
+              - generic [ref=e104]:
+                - text: Giờ thuê tối đa
+                - spinbutton "Giờ thuê tối đa" [ref=e105]: "24"
+              - generic [ref=e106]:
+                - text: Giữ chỗ (giây)
+                - spinbutton "Giữ chỗ (giây)" [ref=e107]: "120"
+            - button "Lưu cấu hình" [ref=e108] [cursor=pointer]
+          - generic [ref=e109]:
+            - generic [ref=e110]:
+              - img [ref=e111]
+              - heading "Thêm tủ mới" [level=2] [ref=e113]
+            - generic [ref=e114]:
+              - generic [ref=e115]:
+                - text: Tên tủ
+                - textbox "Tên tủ" [ref=e116]:
+                  - /placeholder: "Ví dụ: Ngăn 7"
+              - generic [ref=e117]:
+                - text: Trạm
+                - textbox "Trạm" [ref=e118]: Trạm MVP
+              - button "Thêm tủ" [ref=e119] [cursor=pointer]
+      - generic [ref=e120]:
+        - generic [ref=e121]:
+          - heading "Phiên thuê" [level=2] [ref=e122]
+          - table [ref=e124]:
+            - rowgroup [ref=e125]:
+              - row "ID Trạm Ngăn SĐT Thời gian Gốc Quá giờ Tổng Trạng thái" [ref=e126]:
+                - columnheader "ID" [ref=e127]
+                - columnheader "Trạm" [ref=e128]
+                - columnheader "Ngăn" [ref=e129]
+                - columnheader "SĐT" [ref=e130]
+                - columnheader "Thời gian" [ref=e131]
+                - columnheader "Gốc" [ref=e132]
+                - columnheader "Quá giờ" [ref=e133]
+                - columnheader "Tổng" [ref=e134]
+                - columnheader "Trạng thái" [ref=e135]
+            - rowgroup [ref=e136]:
+              - row "Chưa có phiên thuê." [ref=e137]:
+                - cell "Chưa có phiên thuê." [ref=e138]
+        - generic [ref=e139]:
+          - heading "Nhật ký" [level=2] [ref=e140]
+          - generic [ref=e142]: Chưa có log.

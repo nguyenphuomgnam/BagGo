@@ -1,0 +1,37 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - img "BAGGO Smart Locker" [ref=e7]
+      - navigation [ref=e8]:
+        - link "Kiosk" [ref=e9] [cursor=pointer]:
+          - /url: /kiosk
+          - img [ref=e10]
+          - text: Kiosk
+        - link "Khách hàng" [ref=e14] [cursor=pointer]:
+          - /url: /customer
+          - img [ref=e15]
+          - text: Khách hàng
+        - link "Admin" [ref=e17] [cursor=pointer]:
+          - /url: /admin
+          - img [ref=e18]
+          - text: Admin
+  - main [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - heading "Kiosk tại tủ BAGGO" [level=1] [ref=e28]
+          - paragraph [ref=e29]: 0/0 ngăn trống. Chọn thao tác rồi chọn ngăn.
+        - generic [ref=e30]:
+          - button "Gửi đồ" [ref=e31] [cursor=pointer]
+          - button "Nhận đồ" [ref=e32] [cursor=pointer]
+      - complementary [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]: Phiên thao tác
+            - generic [ref=e37]: Chưa chọn ngăn
+          - button "Làm mới" [ref=e38] [cursor=pointer]:
+            - img [ref=e39]
+            - text: Làm mới
+        - generic [ref=e42]:
+          - paragraph [ref=e43]: "Gửi đồ: chọn ngăn trống để bắt đầu đăng ký."
+          - paragraph [ref=e44]: "Nhận đồ: chọn ngăn đang dùng, sau đó xác thực bằng Face ID hoặc OTP dự phòng."

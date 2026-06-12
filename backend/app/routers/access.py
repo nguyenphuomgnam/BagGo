@@ -9,8 +9,6 @@ from app.services.face_service import extract_embedding, identify_face
 from app.services.locker_service import open_locker, update_locker_status
 from app.services.rental_service import (
     ACTIVE_RENTAL_STATUSES,
-    PRICE_PER_HOUR,
-    RESERVATION_HOLD_SECONDS,
     cancel_pending_reservation,
     expire_pending_reservations,
     format_time_left,
@@ -18,12 +16,14 @@ from app.services.rental_service import (
     log_action,
     parse_db_datetime,
     rental_to_dict,
+    sync_overtime_sessions,
 )
 from app.services.session_service import (
     create_customer_token,
     dev_otp_code,
     get_customer_phone,
 )
+from app.services.settings_service import calculate_base_price, calculate_overtime_fee, get_app_settings
 
 router = APIRouter()
 
@@ -41,7 +41,7 @@ class CustomerRentalAction(BaseModel):
 
 
 class ExtendRentalRequest(CustomerRentalAction):
-    hours: int = Field(default=1, ge=1, le=24)
+    hours: int = Field(default=1, ge=1, le=48)
 
 
 def _normalize_phone(phone: str | None) -> str:
@@ -105,9 +105,17 @@ def _complete_rental(rental_id: int, actor: str, expected_phone: str | None = No
         raise HTTPException(400, "Trạng thái thuê không hợp lệ")
 
     locker_id = rental["locker_id"]
+    settings = get_app_settings(conn)
+    overtime_fee = calculate_overtime_fee(dict(rental), settings)["overtime_fee"]
     conn.execute(
-        "UPDATE rentals SET status = 'COMPLETED', returned_at = CURRENT_TIMESTAMP WHERE id = ?",
-        (rental_id,),
+        """
+        UPDATE rentals
+        SET status = 'COMPLETED',
+            penalty = ?,
+            returned_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+        """,
+        (overtime_fee, rental_id),
     )
     _archive_face_embedding(conn, rental_id)
     conn.commit()
@@ -115,8 +123,8 @@ def _complete_rental(rental_id: int, actor: str, expected_phone: str | None = No
 
     open_locker(locker_id)
     update_locker_status(locker_id, "AVAILABLE")
-    log_action(locker_id, actor, "RETURN", f"Kết thúc phiên thuê #{rental_id}")
-    return {"status": "ok", "rental_id": rental_id, "locker_id": locker_id}
+    log_action(locker_id, actor, "RETURN", f"Kết thúc phiên thuê #{rental_id}, phí quá hạn {overtime_fee}đ")
+    return {"status": "ok", "rental_id": rental_id, "locker_id": locker_id, "overtime_fee": overtime_fee}
 
 
 def _open_active_rental(rental_id: int, actor: str, expected_phone: str | None = None):
@@ -137,12 +145,27 @@ def _open_active_rental(rental_id: int, actor: str, expected_phone: str | None =
     return {"status": "ok", "rental_id": rental_id, "locker_id": locker_id}
 
 
+@router.get("/config")
+def get_public_config():
+    settings = get_app_settings()
+    return {
+        "station_name": settings["station_name"],
+        "price_per_hour": settings["price_per_hour"],
+        "overtime_price_per_hour": settings["overtime_price_per_hour"],
+        "min_rental_hours": settings["min_rental_hours"],
+        "max_rental_hours": settings["max_rental_hours"],
+        "reservation_hold_seconds": settings["reservation_hold_seconds"],
+    }
+
+
 @router.post("/reserve")
 def reserve_locker(locker_id: int = 1, hours: int = 2, phone: str = None):
     expire_pending_reservations()
+    sync_overtime_sessions()
+    settings = get_app_settings()
 
-    if hours < 1 or hours > 24:
-        raise HTTPException(400, "Số giờ thuê phải từ 1 đến 24")
+    if hours < settings["min_rental_hours"] or hours > settings["max_rental_hours"]:
+        raise HTTPException(400, f"Số giờ thuê phải từ {settings['min_rental_hours']} đến {settings['max_rental_hours']}")
 
     normalized_phone = _normalize_phone(phone)
     if not normalized_phone:
@@ -150,7 +173,7 @@ def reserve_locker(locker_id: int = 1, hours: int = 2, phone: str = None):
 
     conn = get_db()
     locker = conn.execute("SELECT * FROM lockers WHERE id = ?", (locker_id,)).fetchone()
-    if locker is None or locker["status"] != "AVAILABLE":
+    if locker is None or locker["status"] != "AVAILABLE" or not locker["is_active"]:
         conn.close()
         raise HTTPException(400, "Ngăn không khả dụng")
 
@@ -158,13 +181,14 @@ def reserve_locker(locker_id: int = 1, hours: int = 2, phone: str = None):
     end_time = start_time + datetime.timedelta(hours=hours)
     access_code = generate_access_code()
     otp = dev_otp_code()
+    price = calculate_base_price(hours, settings)
     conn.execute(
         """
         INSERT INTO rentals (
             locker_id, start_time, end_time, status, price, phone, access_code, otp_code, payment_status
         ) VALUES (?, ?, ?, 'RESERVED', ?, ?, ?, ?, 'PENDING')
         """,
-        (locker_id, start_time, end_time, hours * PRICE_PER_HOUR, normalized_phone, access_code, otp),
+        (locker_id, start_time, end_time, price, normalized_phone, access_code, otp),
     )
     rental_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
     conn.commit()
@@ -175,10 +199,11 @@ def reserve_locker(locker_id: int = 1, hours: int = 2, phone: str = None):
     return {
         "rental_id": rental_id,
         "locker_id": locker_id,
-        "timeout": RESERVATION_HOLD_SECONDS,
+        "timeout": settings["reservation_hold_seconds"],
         "access_code": access_code,
         "payment_status": "PENDING",
-        "price": hours * PRICE_PER_HOUR,
+        "price": price,
+        "price_per_hour": settings["price_per_hour"],
     }
 
 
@@ -197,6 +222,7 @@ def cancel_reservation(rental_id: int):
 @router.post("/upload-face/{rental_id}")
 async def upload_face(rental_id: int, file: UploadFile = File(...)):
     expire_pending_reservations()
+    sync_overtime_sessions()
     contents = await file.read()
     embedding = extract_embedding(contents)
     if embedding is None:
@@ -222,6 +248,7 @@ async def upload_face(rental_id: int, file: UploadFile = File(...)):
 @router.post("/payment/callback")
 def payment_callback(rental_id: int):
     expire_pending_reservations()
+    sync_overtime_sessions()
     conn = get_db()
     rental = conn.execute("SELECT * FROM rentals WHERE id = ?", (rental_id,)).fetchone()
     if rental is None or rental["status"] != "RESERVED":
@@ -248,6 +275,7 @@ def payment_callback(rental_id: int):
 
 @router.post("/identify")
 async def identify(file: UploadFile = File(...)):
+    sync_overtime_sessions()
     contents = await file.read()
     embedding = extract_embedding(contents)
     if embedding is None:
@@ -286,6 +314,7 @@ def return_locker(rental_id: int):
 @router.post("/customer/request-otp")
 def request_customer_otp(payload: PhoneRequest):
     expire_pending_reservations()
+    sync_overtime_sessions()
     phone = _normalize_phone(payload.phone)
     otp = dev_otp_code()
     conn = get_db()
@@ -317,6 +346,7 @@ def request_customer_otp(payload: PhoneRequest):
 @router.post("/customer/verify-otp")
 def verify_customer_otp(payload: VerifyOtpRequest):
     expire_pending_reservations()
+    sync_overtime_sessions()
     phone = _normalize_phone(payload.phone)
     conn = get_db()
     rows = conn.execute(
@@ -355,6 +385,7 @@ def verify_customer_otp(payload: VerifyOtpRequest):
 @router.get("/customer/rentals")
 def get_customer_rentals(phone: str = Depends(require_customer_phone)):
     expire_pending_reservations()
+    sync_overtime_sessions()
     conn = get_db()
     rows = conn.execute(
         """
@@ -395,6 +426,10 @@ def customer_extend(
     payload: ExtendRentalRequest,
     phone: str = Depends(require_customer_phone),
 ):
+    settings = get_app_settings()
+    if payload.hours < settings["min_rental_hours"] or payload.hours > settings["max_rental_hours"]:
+        raise HTTPException(400, f"Số giờ gia hạn phải từ {settings['min_rental_hours']} đến {settings['max_rental_hours']}")
+
     conn = get_db()
     rental = _load_owned_rental(conn, payload.rental_id, phone)
     if rental["status"] not in ("OCCUPIED", "OVERTIME"):
@@ -404,14 +439,15 @@ def customer_extend(
     end_dt = parse_db_datetime(rental["end_time"]) or datetime.datetime.now()
     base_dt = max(end_dt, datetime.datetime.now())
     new_end = base_dt + datetime.timedelta(hours=payload.hours)
-    added_price = payload.hours * PRICE_PER_HOUR
+    added_price = calculate_base_price(payload.hours, settings)
+    overtime_fee = calculate_overtime_fee(dict(rental), settings)["overtime_fee"]
     conn.execute(
         """
         UPDATE rentals
-        SET end_time = ?, price = COALESCE(price, 0) + ?, status = 'OCCUPIED'
+        SET end_time = ?, price = COALESCE(price, 0) + ?, penalty = ?, status = 'OCCUPIED'
         WHERE id = ?
         """,
-        (new_end, added_price, payload.rental_id),
+        (new_end, added_price, overtime_fee, payload.rental_id),
     )
     conn.commit()
     row = conn.execute(

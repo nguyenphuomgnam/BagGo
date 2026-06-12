@@ -1,0 +1,25 @@
+[     131ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:14336
+[     187ms] [WARNING] WebSocket connection to 'ws://localhost:5174/ws' failed: WebSocket is closed before the connection is established. @ http://localhost:5174/src/components/KioskUI.jsx:101
+[     199ms] TypeError: lockers.filter is not a function
+    at http://localhost:5174/src/components/KioskUI.jsx:80:47
+    at updateMemo (http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:4947:16)
+    at Object.useMemo (http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:13275:13)
+    at exports.useMemo (http://localhost:5174/node_modules/.vite/deps/react-CZunmVaX.js?v=1fc2f736:767:31)
+    at KioskUI (http://localhost:5174/src/components/KioskUI.jsx:80:25)
+    at Object.react_stack_bottom_frame (http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:12867:12)
+    at renderWithHooks (http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:4212:19)
+    at updateFunctionComponent (http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:5568:16)
+    at beginWork (http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:6139:20)
+    at runWithFiberInDEV (http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:850:66)
+[     199ms] [WARNING] %s
+
+%s
+ An error occurred in the <KioskUI> component. Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries. @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:5256
+[     200ms] [WARNING] WebSocket connection to 'ws://localhost:5174/ws' failed: WebSocket is closed before the connection is established. @ http://localhost:5174/src/components/KioskUI.jsx:101
+[   98840ms] [WARNING] WebSocket connection to 'ws://localhost:8000/ws' failed: WebSocket is closed before the connection is established. @ http://localhost:5174/src/components/KioskUI.jsx?t=1781224965082:101
+[  125702ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=c49800bf:14336
+[  125818ms] [WARNING] WebSocket connection to 'ws://localhost:8000/ws' failed: WebSocket is closed before the connection is established. @ http://localhost:5174/src/components/KioskUI.jsx?t=1781224965082:101
+[  204540ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:5174/@vite/client:992
+[  205845ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:5174/node_modules/.vite/deps/react-dom_client.js?v=f9150a26:14336
+[  205921ms] [WARNING] WebSocket connection to 'ws://localhost:8000/ws' failed: WebSocket is closed before the connection is established. @ http://localhost:5174/src/components/KioskUI.jsx:101
