@@ -533,33 +533,33 @@ export default function ClientUI() {
     if (loginTab === 'reserve') {
       return (
         <div className="mx-auto max-w-5xl space-y-5 animate-fade-in">
-          <div className="grid gap-5 lg:grid-cols-[400px_1fr]">
+          <div className="grid gap-6 lg:grid-cols-[400px_1fr] items-start">
             {/* LEFT COLUMN: Booking Configuration */}
-            <section className="baggo-surface rounded-2xl border p-6 shadow-sm bg-white flex flex-col justify-between min-h-[500px]">
-              <div className="space-y-5">
+            <section className="baggo-surface rounded-2xl border border-brand-100 p-6 bg-white flex flex-col gap-5 shadow-[0_12px_30px_-4px_rgba(18,139,77,0.06)] transition-all duration-300 hover:shadow-[0_20px_40px_-4px_rgba(18,139,77,0.12)]">
+              <div className="space-y-4">
                 {/* Header */}
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/10">
                     <MapPin className="h-5 w-5" />
                   </div>
                   <div>
-                    <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Đặt trước tủ online</h1>
-                    <p className="text-xs font-medium text-slate-400">Giữ chỗ trước khi đến tối đa 2 tiếng</p>
+                    <h1 className="text-lg font-black tracking-tight text-slate-900 leading-tight">Đặt trước tủ online</h1>
+                    <p className="text-xs font-semibold text-slate-400 mt-0.5">Giữ chỗ trước khi đến tối đa 2 tiếng</p>
                   </div>
                 </div>
 
                 {/* Tab Selector */}
-                <div className="flex rounded-xl bg-slate-100 p-1">
+                <div className="flex rounded-2xl bg-slate-100 p-1 border border-slate-200/50">
                   <button
                     type="button"
                     onClick={() => {
                       setLoginTab('login');
                       setMessage({ type: 'info', text: '' });
                     }}
-                    className={`flex-1 py-2 text-center text-xs font-extrabold rounded-lg transition-all duration-200 ${
+                    className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 ${
                       loginTab === 'login'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-900'
+                        ? 'bg-white text-brand-700 shadow-sm border border-slate-200/20'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-white/40'
                     }`}
                   >
                     Đăng nhập quản lý
@@ -570,10 +570,10 @@ export default function ClientUI() {
                       setLoginTab('reserve');
                       setMessage({ type: 'info', text: '' });
                     }}
-                    className={`flex-1 py-2 text-center text-xs font-extrabold rounded-lg transition-all duration-200 ${
+                    className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 ${
                       loginTab === 'reserve'
-                        ? 'bg-white text-slate-900 shadow-sm'
-                        : 'text-slate-500 hover:text-slate-900'
+                        ? 'bg-white text-brand-700 shadow-sm border border-slate-200/20'
+                        : 'text-slate-500 hover:text-slate-900 hover:bg-white/40'
                     }`}
                   >
                     Đặt trước tủ
@@ -582,12 +582,12 @@ export default function ClientUI() {
 
                 {/* SĐT */}
                 <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Số điện thoại liên hệ</span>
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 block mb-2">Số điện thoại liên hệ</span>
                   <input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     inputMode="tel"
-                    className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-3 text-base font-semibold outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                    className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/30 px-4 py-3 text-base font-bold text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-300 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
                     placeholder="0901234567"
                   />
                 </label>
@@ -595,11 +595,11 @@ export default function ClientUI() {
                 {/* Thời gian đến & số giờ thuê */}
                 <div className="grid grid-cols-2 gap-3">
                   <label className="block">
-                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Thời gian hẹn đến</span>
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 block mb-2">Thời gian hẹn đến</span>
                     <select
                       value={reserveStartTime}
                       onChange={(e) => setReserveStartTime(e.target.value)}
-                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                      className="w-full rounded-2xl border border-slate-200/85 bg-white px-3.5 py-3 text-sm font-bold text-slate-800 outline-none transition-all duration-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10"
                     >
                       <option value="">Ngay bây giờ</option>
                       <option value="15">Sau 15 phút</option>
@@ -609,11 +609,11 @@ export default function ClientUI() {
                     </select>
                   </label>
                   <label className="block">
-                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Số giờ thuê</span>
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 block mb-2">Số giờ thuê</span>
                     <select
                       value={reserveHours}
                       onChange={(e) => setReserveHours(parseInt(e.target.value, 10))}
-                      className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                      className="w-full rounded-2xl border border-slate-200/85 bg-white px-3.5 py-3 text-sm font-bold text-slate-800 outline-none transition-all duration-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10"
                     >
                       {Array.from(
                         { length: (config.max_rental_hours || 24) - (config.min_rental_hours || 1) + 1 },
@@ -628,43 +628,43 @@ export default function ClientUI() {
                 </div>
 
                 {/* Price Panel */}
-                <div className="rounded-xl border border-brand-100 bg-brand-50/40 p-4 space-y-2">
-                  <div className="flex items-center justify-between text-xs font-bold text-slate-500">
+                <div className="rounded-2xl border border-brand-100 bg-brand-50/40 p-4 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs font-extrabold text-slate-500">
                     <span>Đơn giá của trạm:</span>
-                    <span>{money(config.price_per_hour || 10000)}/giờ</span>
+                    <span className="text-slate-800">{money(config.price_per_hour || 10000)}/giờ</span>
                   </div>
-                  <div className="flex items-center justify-between border-t border-brand-100/40 pt-2 text-sm font-extrabold text-slate-800">
+                  <div className="flex items-center justify-between border-t border-brand-100/40 pt-2.5 text-sm font-extrabold text-slate-800">
                     <span>Ước tính tổng phí:</span>
                     <span className="text-lg font-black text-brand-700">
                       {money(reserveHours * (config.price_per_hour || 10000))}
                     </span>
                   </div>
                   {selectedLockerId && (
-                    <div className="mt-1.5 rounded-lg bg-emerald-55 border border-emerald-200 py-1.5 text-center text-xs font-extrabold text-emerald-800">
+                    <div className="mt-2.5 rounded-xl bg-emerald-50 border border-emerald-200 py-2 text-center text-xs font-black text-emerald-800 animate-pulse-subtle">
                       Đang chọn: Ngăn {lockers.find(l => l.id === selectedLockerId)?.name || selectedLockerId}
                     </div>
                   )}
                 </div>
 
                 {/* Policy checkbox */}
-                <label className="flex cursor-pointer items-start gap-2">
+                <label className="flex cursor-pointer items-start gap-2.5 py-1">
                   <input
                     type="checkbox"
                     checked={agreePolicy}
                     onChange={(e) => setAgreePolicy(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-brand-200 text-brand-600 focus:ring-brand-500"
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500/20 focus:ring-offset-0 transition-all"
                   />
-                  <span className="text-[11px] font-medium leading-4 text-slate-500">
+                  <span className="text-[10.5px] font-bold leading-relaxed text-slate-500">
                     Tôi đồng ý giữ chỗ và cam kết đến check-in gửi đồ trong vòng 15 phút so với giờ hẹn.
                   </span>
                 </label>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="pt-4 border-t border-slate-150 space-y-3">
                 <button
                   onClick={handleReserve}
                   disabled={loading || !selectedLockerId || !agreePolicy || !phone}
-                  className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-extrabold shadow-md disabled:opacity-60 transition"
+                  className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl py-4 font-black text-sm tracking-wide shadow-md shadow-brand-600/10 hover:shadow-lg hover:shadow-brand-600/20 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-205"
                 >
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   Đặt giữ tủ ngay
@@ -716,7 +716,7 @@ export default function ClientUI() {
                           isSelected
                             ? 'border-brand-600 bg-brand-50/50 ring-2 ring-brand-600/20 text-brand-700 shadow-sm'
                             : isAvailable
-                            ? 'border-emerald-150 bg-white hover:border-emerald-400 hover:shadow-sm animate-pulse-subtle'
+                            ? 'border-emerald-100 bg-white hover:border-emerald-400 hover:shadow-sm animate-pulse-subtle'
                             : 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400'
                         }`}
                       >
@@ -726,9 +726,9 @@ export default function ClientUI() {
                         <div className="text-lg font-black tracking-tight text-slate-800">{locker.name}</div>
                         <div className={`mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md ${
                           isSelected
-                            ? 'bg-brand-650 text-white'
+                            ? 'bg-brand-600 text-white'
                             : isAvailable
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                            ? 'bg-emerald-55 text-emerald-700 border border-emerald-100'
                             : 'bg-slate-100 text-slate-400'
                         }`}>
                           {isSelected ? 'Đang chọn' : isAvailable ? 'Trống' : 'Bận'}
@@ -764,7 +764,7 @@ export default function ClientUI() {
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
                   </>
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-650 to-brand-500" />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
                 )}
                 
                 <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
@@ -792,32 +792,32 @@ export default function ClientUI() {
 
     return (
       <div className="mx-auto max-w-5xl space-y-5 animate-fade-in">
-        <div className="grid gap-5 lg:grid-cols-[420px_1fr]">
+        <div className="grid gap-6 lg:grid-cols-[400px_1fr] items-start">
           {/* LEFT COLUMN: Phone & OTP login */}
-          <section className="baggo-surface rounded-2xl border p-6 shadow-sm bg-white flex flex-col justify-between min-h-[500px]">
+          <section className="baggo-surface rounded-2xl border border-brand-100 p-6 bg-white flex flex-col gap-6 shadow-[0_12px_30px_-4px_rgba(18,139,77,0.06)] transition-all duration-300 hover:shadow-[0_20px_40px_-4px_rgba(18,139,77,0.12)]">
             <div className="space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/10">
                   <Smartphone className="h-5 w-5" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-extrabold tracking-tight text-slate-900">Quản lý tủ của bạn</h1>
-                  <p className="text-xs font-medium text-slate-400">Xem & điều khiển tủ từ xa</p>
+                  <h1 className="text-lg font-black tracking-tight text-slate-900 leading-tight">Quản lý tủ của bạn</h1>
+                  <p className="text-xs font-semibold text-slate-400 mt-0.5">Xem &amp; điều khiển tủ từ xa 24/7</p>
                 </div>
               </div>
 
               {/* Tab Selector */}
-              <div className="flex rounded-xl bg-slate-100 p-1">
+              <div className="flex rounded-2xl bg-slate-100 p-1 border border-slate-200/50">
                 <button
                   type="button"
                   onClick={() => {
                     setLoginTab('login');
                     setMessage({ type: 'info', text: '' });
                   }}
-                  className={`flex-1 py-2 text-center text-xs font-extrabold rounded-lg transition-all duration-200 ${
+                  className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 ${
                     loginTab === 'login'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-white text-brand-700 shadow-sm border border-slate-200/20'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-white/40'
                   }`}
                 >
                   Đăng nhập quản lý
@@ -828,10 +828,10 @@ export default function ClientUI() {
                     setLoginTab('reserve');
                     setMessage({ type: 'info', text: '' });
                   }}
-                  className={`flex-1 py-2 text-center text-xs font-extrabold rounded-lg transition-all duration-200 ${
+                  className={`flex-1 py-2.5 text-center text-xs font-black rounded-xl transition-all duration-300 ${
                     loginTab === 'reserve'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-900'
+                      ? 'bg-white text-brand-700 shadow-sm border border-slate-200/20'
+                      : 'text-slate-500 hover:text-slate-900 hover:bg-white/40'
                   }`}
                 >
                   Đặt trước tủ
@@ -840,38 +840,39 @@ export default function ClientUI() {
 
               <div className="space-y-4">
                 <label className="block">
-                  <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Số điện thoại</span>
-                  <div className="relative mt-1.5">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 block mb-2">Số điện thoại</span>
+                  <div className="relative">
                     <input
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       inputMode="tel"
-                      className="w-full rounded-xl border border-slate-200 pl-4 pr-24 py-3 text-base font-semibold outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                      className="w-full rounded-2xl border border-slate-200/80 bg-slate-50/30 pl-4 pr-28 py-3.5 text-base font-bold text-slate-900 placeholder:text-slate-400 outline-none transition-all duration-300 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
                       placeholder="0901234567"
                     />
                     <button
                       onClick={requestOtp}
                       disabled={loading || !phone}
-                      className="absolute right-1.5 top-1.5 bottom-1.5 px-3.5 rounded-lg bg-brand-600 text-white text-xs font-extrabold hover:bg-brand-700 disabled:bg-slate-100 disabled:text-slate-400 transition"
+                      className="absolute right-2 top-2 bottom-2 px-4 rounded-xl bg-brand-600 text-white text-xs font-black tracking-wide hover:bg-brand-700 active:scale-95 disabled:bg-slate-100 disabled:text-slate-450 disabled:scale-100 transition-all duration-200"
                     >
-                      {loading ? '...' : 'Gửi mã'}
+                      {loading ? 'Đang gửi...' : 'Gửi mã'}
                     </button>
                   </div>
                 </label>
 
                 {otpHint && (
                   <div className="space-y-4 animate-fade-in">
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-bold text-amber-700">
-                      {otpHint}
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-3.5 text-xs font-bold text-amber-800 flex items-start gap-2 shadow-xs">
+                      <span className="text-amber-500">💡</span>
+                      <span>{otpHint}</span>
                     </div>
 
                     <label className="block">
-                      <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Mã xác thực OTP</span>
+                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500 block mb-2">Mã xác thực OTP</span>
                       <input
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
                         inputMode="numeric"
-                        className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-3.5 text-center text-2xl font-extrabold tracking-[0.3em] outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20"
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-4 text-center text-2xl font-black tracking-[0.3em] outline-none transition-all duration-300 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 text-slate-900"
                         placeholder="000000"
                         maxLength={6}
                       />
@@ -880,7 +881,7 @@ export default function ClientUI() {
                     <button
                       onClick={verifyOtp}
                       disabled={loading || otp.length < 4}
-                      className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-extrabold shadow-sm disabled:opacity-60 transition"
+                      className="baggo-primary inline-flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-sm font-black tracking-wide shadow-md shadow-brand-600/10 hover:shadow-lg hover:shadow-brand-600/20 active:scale-[0.98] disabled:opacity-50 disabled:scale-100 disabled:shadow-none transition-all duration-205"
                     >
                       {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                       Đăng nhập ngay
@@ -893,98 +894,69 @@ export default function ClientUI() {
             </div>
 
             {/* Info Cards */}
-            <div className="grid gap-2 grid-cols-3 border-t border-slate-100 pt-4 mt-4">
+            <div className="grid gap-2.5 grid-cols-3 border-t border-slate-150 pt-5">
               {[
-                ['Face ID', 'Nhận diện bảo mật.'],
-                ['OTP SMS', 'Xác thực tiện lợi.'],
-                ['Điều khiển', 'Mở từ xa 24/7.'],
+                ['Face ID', 'Bảo mật tối đa'],
+                ['OTP SMS', 'Xác thực nhanh'],
+                ['Điều khiển', 'Mở từ xa 24/7'],
               ].map(([title, desc]) => (
-                <div key={title} className="rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-center">
-                  <ShieldCheck className="mx-auto mb-1 h-3.5 w-3.5 text-brand-600" />
+                <div key={title} className="rounded-xl border border-slate-100 bg-slate-50/60 p-2.5 text-center transition-all duration-300 hover:bg-brand-50/20 hover:border-brand-200 group">
+                  <ShieldCheck className="mx-auto mb-1.5 h-4 w-4 text-brand-600 transition-transform duration-300 group-hover:scale-110" />
                   <div className="text-[10px] font-extrabold text-slate-800">{title}</div>
-                  <p className="mt-0.5 text-[9px] font-medium leading-3 text-slate-400">{desc}</p>
+                  <p className="mt-0.5 text-[8.5px] font-bold leading-tight text-slate-450">{desc}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          {/* RIGHT COLUMN: Premium Operations Dashboard */}
-          <section className="baggo-surface rounded-2xl border p-6 shadow-sm bg-white flex flex-col justify-between min-h-[500px]">
-            <div className="space-y-6">
-              {/* Header */}
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-extrabold text-emerald-700 border border-emerald-100">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
-                  Hệ thống giám sát trạm BagGo Live
-                </div>
-                <h2 className="text-xl font-extrabold text-slate-900 mt-2">Giám sát mạng lưới IoT thời gian thực</h2>
-                <p className="mt-1 text-xs font-semibold text-slate-400">
-                  Kết nối trực tiếp tới các tủ khóa thông minh để quản lý vị trí & trạng thái.
-                </p>
-              </div>
+          {/* RIGHT COLUMN: Map & Station Info */}
+          <div className="space-y-5">
+            {/* Station Map */}
+            <section className="baggo-surface rounded-2xl border p-5 shadow-sm bg-white">
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-extrabold text-slate-800">
+                <MapPin className="h-4 w-4 text-brand-600" />
+                Bản đồ mạng lưới trạm BagGo
+              </h2>
+              <StationMap
+                stations={stations}
+                selectedStationName={selectedStationName}
+                onSelectStationName={setSelectedStationName}
+              />
+            </section>
 
-              {/* Grid Metrics */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-center">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Kết nối IoT</div>
-                  <div className="text-sm font-extrabold text-emerald-600 mt-0.5">🟢 Online</div>
+            {/* Station List / Quick Guide */}
+            <section className="baggo-surface rounded-2xl border p-5 shadow-sm bg-white">
+              <h2 className="mb-4 text-sm font-extrabold text-slate-900">Hướng dẫn vận hành tủ BagGo</h2>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-2 text-left">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600 text-xs font-black">1</span>
+                  <h3 className="text-xs font-extrabold text-slate-800">Đặt trước / Login</h3>
+                  <p className="text-[11px] font-semibold text-slate-500 leading-relaxed">
+                    Đặt giữ chỗ online trước 15 phút hoặc đăng nhập để kiểm tra phiên thuê hiện tại.
+                  </p>
                 </div>
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-center">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Tỷ lệ trống</div>
-                  <div className="text-sm font-extrabold text-brand-700 mt-0.5">74% Trống</div>
-                </div>
-                <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-center">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Nhiệt độ trạm</div>
-                  <div className="text-sm font-extrabold text-slate-700 mt-0.5">25.4 °C</div>
-                </div>
-              </div>
 
-              {/* Locker Grid visual simulation */}
-              <div className="rounded-xl border border-slate-200/60 p-4 bg-slate-50/50">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-500 mb-3">
-                  <span>Mô phỏng ngăn tủ vật lý (Live View)</span>
-                  <span className="text-[10px] text-slate-400">Hub Quận 10</span>
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-2 text-left">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 text-xs font-black">2</span>
+                  <h3 className="text-xs font-extrabold text-slate-800">Gửi hành lý</h3>
+                  <p className="text-[11px] font-semibold text-slate-500 leading-relaxed">
+                    Đến trạm tủ, quét QR thanh toán hoặc nhập SĐT trên màn hình kiosk để mở ngăn tủ.
+                  </p>
                 </div>
-                <div className="grid grid-cols-6 gap-2">
-                  {[...Array(12)].map((_, idx) => {
-                    const isOccupied = [2, 5, 8, 11].includes(idx); // mock occupied state
-                    return (
-                      <div
-                        key={idx}
-                        className={`h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border transition duration-300 ${
-                          isOccupied
-                            ? 'bg-slate-150 border-slate-200 text-slate-400'
-                            : 'bg-emerald-50 border-emerald-100 text-emerald-700 animate-pulse-subtle'
-                        }`}
-                        title={isOccupied ? 'Đang bận' : 'Sẵn sàng'}
-                      >
-                        {idx + 1}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
 
-              {/* Clean Quick Workflow instructions */}
-              <div className="space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Hướng dẫn sử dụng nhanh</h3>
-                <div className="grid grid-cols-1 gap-2">
-                  {[
-                    ['1. Đặt trước', 'Chọn ngăn tủ trống trực tuyến, nhận giữ chỗ trong vòng 15 phút.'],
-                    ['2. Đến trạm', 'Nhập số điện thoại hoặc nhận diện khuôn mặt (Face ID) tại kiosk.'],
-                    ['3. Gửi đồ', 'Mở tủ từ xa thông qua ứng dụng hoặc giao diện kiosk để cất/lấy đồ.'],
-                  ].map(([step, desc]) => (
-                    <div key={step} className="flex gap-3 text-xs leading-5">
-                      <span className="font-extrabold text-slate-800 shrink-0">{step}:</span>
-                      <span className="font-medium text-slate-500">{desc}</span>
-                    </div>
-                  ))}
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-2 text-left">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600 text-xs font-black">3</span>
+                  <h3 className="text-xs font-extrabold text-slate-800">Mở tủ từ xa</h3>
+                  <p className="text-[11px] font-semibold text-slate-500 leading-relaxed">
+                    Đăng nhập tài khoản trên điện thoại để điều khiển mở tủ lấy đồ từ xa 24/7 tiện lợi.
+                  </p>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </div>
         </div>
-        {/* Banner quảng cáo chèn cho khách hàng */}
+
+                {/* Banner quảng cáo chèn cho khách hàng */}
         {ads && ads.length > 0 && (() => {
           const currentAd = ads[activeAdIndex];
           const hasImage = !!currentAd.image_url;
@@ -1003,7 +975,7 @@ export default function ClientUI() {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
                 </>
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-650 to-brand-500" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
               )}
               
               <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
@@ -1080,7 +1052,7 @@ export default function ClientUI() {
             </button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-[340px_1fr]">
+          <div className="grid gap-6 md:grid-cols-[340px_1fr] items-start">
             {/* Form details */}
             <div className="space-y-4">
               <label className="block">
@@ -1140,7 +1112,7 @@ export default function ClientUI() {
                   </span>
                 </div>
                 {selectedLockerId && (
-                  <div className="mt-1.5 rounded-lg bg-emerald-55 border border-emerald-200 py-1.5 text-center text-xs font-extrabold text-emerald-800">
+                  <div className="mt-1.5 rounded-lg bg-emerald-50 border border-emerald-200 py-1.5 text-center text-xs font-extrabold text-emerald-800">
                     Đang chọn: Ngăn {lockers.find(l => l.id === selectedLockerId)?.name || selectedLockerId}
                   </div>
                 )}
@@ -1204,7 +1176,7 @@ export default function ClientUI() {
                           isSelected
                             ? 'border-brand-600 bg-brand-50/50 ring-2 ring-brand-600/20 text-brand-700 shadow-sm'
                             : isAvailable
-                            ? 'border-emerald-150 bg-white hover:border-emerald-400 hover:shadow-sm'
+                            ? 'border-emerald-100 bg-white hover:border-emerald-400 hover:shadow-sm'
                             : 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400'
                         }`}
                       >
@@ -1388,7 +1360,7 @@ export default function ClientUI() {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
               </>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-650 to-brand-500" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
             )}
             
             <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">

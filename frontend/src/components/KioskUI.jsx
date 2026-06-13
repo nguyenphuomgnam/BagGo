@@ -551,7 +551,7 @@ export default function KioskUI() {
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
                 </>
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-650 to-brand-500" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
               )}
               
               <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
