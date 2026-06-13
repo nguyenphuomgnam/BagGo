@@ -155,6 +155,8 @@ def get_public_config():
         "min_rental_hours": settings["min_rental_hours"],
         "max_rental_hours": settings["max_rental_hours"],
         "reservation_hold_seconds": settings["reservation_hold_seconds"],
+        "policy_terms": settings.get("policy_terms", ""),
+        "policy_regulations": settings.get("policy_regulations", ""),
     }
 
 

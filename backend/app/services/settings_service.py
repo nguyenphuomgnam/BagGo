@@ -13,6 +13,8 @@ DEFAULT_SETTINGS = {
     "min_rental_hours": 1,
     "max_rental_hours": 24,
     "reservation_hold_seconds": int(os.getenv("RESERVATION_HOLD_SECONDS", "120")),
+    "policy_terms": "1. Cam kết đến gửi đồ đúng giờ hẹn. Quá 15 phút phiên giữ chỗ sẽ bị hủy tự động.\n2. Không để các chất dễ cháy nổ, vũ khí, hóa chất độc hại vào tủ.\n3. Khách hàng tự chịu trách nhiệm bảo quản tài sản có giá trị cao như tiền mặt, vàng, trang sức.",
+    "policy_regulations": "1. Mỗi lượt thuê tối thiểu là 1 giờ.\n2. Vui lòng đóng chặt cửa tủ sau khi gửi hoặc lấy hành lý.\n3. Nếu quá thời gian thuê đã đăng ký, phí quá hạn sẽ được tính theo bảng giá cấu hình.",
 }
 
 
@@ -72,6 +74,8 @@ def get_app_settings(conn=None) -> dict:
             DEFAULT_SETTINGS["reservation_hold_seconds"],
             0,
         ),
+        "policy_terms": values.get("policy_terms") if values.get("policy_terms") is not None else DEFAULT_SETTINGS["policy_terms"],
+        "policy_regulations": values.get("policy_regulations") if values.get("policy_regulations") is not None else DEFAULT_SETTINGS["policy_regulations"],
     }
     if settings["max_rental_hours"] < settings["min_rental_hours"]:
         settings["max_rental_hours"] = settings["min_rental_hours"]
@@ -95,6 +99,8 @@ def save_app_settings(payload: dict) -> dict:
             current["reservation_hold_seconds"],
             0,
         ),
+        "policy_terms": str(payload.get("policy_terms") if payload.get("policy_terms") is not None else current["policy_terms"]).strip(),
+        "policy_regulations": str(payload.get("policy_regulations") if payload.get("policy_regulations") is not None else current["policy_regulations"]).strip(),
     }
     if next_settings["max_rental_hours"] < next_settings["min_rental_hours"]:
         next_settings["max_rental_hours"] = next_settings["min_rental_hours"]

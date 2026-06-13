@@ -25,6 +25,21 @@ import {
   Eye,
   MousePointerClick,
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 import { api, subscribeWs } from '../lib/api';
 import { getLockerStatusMeta } from '../lib/lockerStatus';
 import StationManager from './StationManager';
@@ -214,6 +229,8 @@ export default function AdminUI() {
     min_rental_hours: 1,
     max_rental_hours: 24,
     reservation_hold_seconds: 120,
+    policy_terms: '1. Cam kết đến gửi đồ đúng giờ hẹn. Quá 15 phút phiên giữ chỗ sẽ bị hủy tự động.\n2. Không để các chất dễ cháy nổ, vũ khí, hóa chất độc hại vào tủ.\n3. Khách hàng tự chịu trách nhiệm bảo quan tài sản có giá trị cao như tiền mặt, vàng, trang sức.',
+    policy_regulations: '1. Mỗi lượt thuê tối thiểu là 1 giờ.\n2. Vui lòng đóng chặt cửa tủ sau khi gửi hoặc lấy hành lý.\n3. Nếu quá thời gian thuê đã đăng ký, phí quá hạn sẽ được tính theo bảng giá cấu hình.',
   });
   const [newLocker, setNewLocker] = useState({
     name: '',
@@ -238,6 +255,50 @@ export default function AdminUI() {
   const [pendingAction, setPendingAction] = useState(null);
   const { activeTab = 'overview' } = useParams();
   const navigate = useNavigate();
+
+  const [chartMetric, setChartMetric] = useState('revenue');
+
+  const chartData = useMemo(() => {
+    if (stats?.history && stats.history.length > 0) {
+      return stats.history.map(item => {
+        const parts = item.day.split('-');
+        const formattedDay = parts.length === 3 ? `${parts[2]}/${parts[1]}` : item.day;
+        return {
+          ...item,
+          day: formattedDay
+        };
+      });
+    }
+    return [
+      { day: '07/06', revenue: 40000, bookings: 4 },
+      { day: '08/06', revenue: 70000, bookings: 7 },
+      { day: '09/06', revenue: 50000, bookings: 5 },
+      { day: '10/06', revenue: 90000, bookings: 9 },
+      { day: '11/06', revenue: 120000, bookings: 12 },
+      { day: '12/06', revenue: 150000, bookings: 15 },
+      { day: '13/06', revenue: 180000, bookings: 18 },
+    ];
+  }, [stats?.history]);
+
+  const donutData = useMemo(() => {
+    const available = stats?.available_lockers || 0;
+    const reserved = stats?.reserved_sessions || 0;
+    const overtime = stats?.overtime_sessions || 0;
+    const activeTotal = stats?.active_sessions || 0;
+    const occupied = Math.max(0, activeTotal - overtime);
+
+    return [
+      { name: 'Trống', value: available, color: '#10b981' },
+      { name: 'Đặt trước', value: reserved, color: '#f59e0b' },
+      { name: 'Đang thuê', value: occupied, color: '#6366f1' },
+      { name: 'Quá giờ', value: overtime, color: '#ef4444' },
+    ].filter(d => d.value > 0);
+  }, [stats]);
+
+  const finalDonutData = useMemo(() => {
+    if (donutData.length > 0) return donutData;
+    return [{ name: 'Trống', value: 1, color: '#10b981' }];
+  }, [donutData]);
 
   // Advertisement state
   const [ads, setAds] = useState([]);
@@ -338,6 +399,8 @@ export default function AdminUI() {
         min_rental_hours: 1,
         max_rental_hours: 24,
         reservation_hold_seconds: 120,
+        policy_terms: '1. Cam kết đến gửi đồ đúng giờ hẹn. Quá 15 phút phiên giữ chỗ sẽ bị hủy tự động.\n2. Không để các chất dễ cháy nổ, vũ khí, hóa chất độc hại vào tủ.\n3. Khách hàng tự chịu trách nhiệm bảo quản tài sản có giá trị cao như tiền mặt, vàng, trang sức.',
+        policy_regulations: '1. Mỗi lượt thuê tối thiểu là 1 giờ.\n2. Vui lòng đóng chặt cửa tủ sau khi gửi hoặc lấy hành lý.\n3. Nếu quá thời gian thuê đã đăng ký, phí quá hạn sẽ được tính theo bảng giá cấu hình.',
       };
       setSettings(settingsData || defaultSettings);
       setSettingsDraft(settingsData || defaultSettings);
@@ -738,6 +801,148 @@ export default function AdminUI() {
             ))}
           </section>
 
+          {/* Charts Section */}
+          <div className="grid gap-5 md:grid-cols-[1.2fr_0.8fr]">
+            {/* Left Card: Trend Chart */}
+            <div className="baggo-surface rounded-xl border border-slate-150 p-5 bg-white shadow-2xs">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Phân tích xu hướng</h3>
+                  <p className="text-xs font-medium text-slate-400">Thống kê hoạt động của trạm</p>
+                </div>
+                <div className="flex rounded-lg border border-slate-150 p-0.5 bg-slate-50 self-start">
+                  <button
+                    onClick={() => setChartMetric('revenue')}
+                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+                      chartMetric === 'revenue'
+                        ? 'bg-white text-brand-700 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Doanh thu
+                  </button>
+                  <button
+                    onClick={() => setChartMetric('bookings')}
+                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
+                      chartMetric === 'bookings'
+                        ? 'bg-white text-brand-700 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    Số lượt đặt
+                  </button>
+                </div>
+              </div>
+
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="chartColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartMetric === 'revenue' ? '#10b981' : '#6366f1'} stopOpacity={0.25}/>
+                        <stop offset="95%" stopColor={chartMetric === 'revenue' ? '#10b981' : '#6366f1'} stopOpacity={0.01}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                      tickFormatter={(val) => chartMetric === 'revenue' ? `${val / 1000}k` : val}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        boxShadow: '0 1px 3px 0 rgba(0,0,0,0.05)',
+                        fontSize: '12px',
+                        fontWeight: '700'
+                      }}
+                      formatter={(value) => [
+                        chartMetric === 'revenue' ? money(value) : `${value} lượt`,
+                        chartMetric === 'revenue' ? 'Doanh thu' : 'Lượt đặt'
+                      ]}
+                      labelFormatter={(label) => `Ngày: ${label}`}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey={chartMetric}
+                      stroke={chartMetric === 'revenue' ? '#10b981' : '#6366f1'}
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#chartColor)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Right Card: Locker Utilization Donut Chart */}
+            <div className="baggo-surface rounded-xl border border-slate-150 p-5 bg-white shadow-2xs flex flex-col justify-between">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Sơ đồ sử dụng tủ</h3>
+                <p className="text-xs font-medium text-slate-400">Trạng thái các ngăn hiện tại</p>
+              </div>
+
+              <div className="relative flex items-center justify-center h-48 my-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={finalDonutData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={75}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {finalDonutData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: '#ffffff',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: '700'
+                      }}
+                      formatter={(val, name) => [`${val} ngăn`, name]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Donut Center Label */}
+                <div className="absolute flex flex-col items-center justify-center">
+                  <span className="text-2xl font-black text-slate-800">{stats?.total_lockers || lockers.length}</span>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tổng số ngăn</span>
+                </div>
+              </div>
+
+              {/* Custom Legend */}
+              <div className="grid grid-cols-2 gap-2 mt-2 pt-3 border-t border-slate-100">
+                {[
+                  { label: 'Trống', color: 'bg-emerald-500', count: stats?.available_lockers || 0 },
+                  { label: 'Đặt trước', color: 'bg-amber-500', count: stats?.reserved_sessions || 0 },
+                  { label: 'Đang thuê', color: 'bg-indigo-500', count: Math.max(0, (stats?.active_sessions || 0) - (stats?.overtime_sessions || 0)) },
+                  { label: 'Quá hạn', color: 'bg-rose-500', count: stats?.overtime_sessions || 0 },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                    <span className={`h-2.5 w-2.5 rounded-full ${item.color} shrink-0`} />
+                    <span>{item.label}: <span className="text-slate-800 font-extrabold">{item.count}</span></span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Alerts & Logs Layout */}
           <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
             {/* Left side list of alerts and active rentals */}
@@ -1050,6 +1255,26 @@ export default function AdminUI() {
                   value={settingsDraft.reservation_hold_seconds}
                   onChange={(event) => updateSettingsField('reservation_hold_seconds', Number(event.target.value))}
                   className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                />
+              </label>
+              <label className="block sm:col-span-2">
+                <span className="text-sm font-bold text-slate-700">Điều khoản & Điều kiện (Chính sách)</span>
+                <textarea
+                  rows={3}
+                  value={settingsDraft.policy_terms || ''}
+                  onChange={(event) => updateSettingsField('policy_terms', event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                  placeholder="Nhập các điều khoản sử dụng tủ..."
+                />
+              </label>
+              <label className="block sm:col-span-2">
+                <span className="text-sm font-bold text-slate-700">Nội quy & Hướng dẫn sử dụng</span>
+                <textarea
+                  rows={3}
+                  value={settingsDraft.policy_regulations || ''}
+                  onChange={(event) => updateSettingsField('policy_regulations', event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                  placeholder="Nhập nội quy sử dụng tủ..."
                 />
               </label>
             </div>

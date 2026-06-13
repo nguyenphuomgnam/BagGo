@@ -408,6 +408,26 @@ def get_admin_stats(_: bool = Depends(require_admin)):
         "SELECT COUNT(*) FROM rentals WHERE status = 'OVERTIME'"
     ).fetchone()[0]
     alerts = _build_overtime_alerts(conn)
+    history_rows = conn.execute(
+        """
+        SELECT 
+            date(COALESCE(start_time, 'now')) AS day,
+            COUNT(*) AS bookings,
+            SUM(CASE WHEN payment_status = 'PAID' THEN price ELSE 0 END) AS revenue
+        FROM rentals
+        GROUP BY day
+        ORDER BY day ASC
+        LIMIT 14
+        """
+    ).fetchall()
+    history = [
+        {
+            "day": row["day"],
+            "bookings": row["bookings"],
+            "revenue": row["revenue"] or 0
+        }
+        for row in history_rows
+    ]
     conn.close()
 
     available_lockers = len([locker for locker in lockers if locker["status"] == "AVAILABLE"])
@@ -425,6 +445,7 @@ def get_admin_stats(_: bool = Depends(require_admin)):
         "busy_lockers": busy_lockers,
         "utilization_rate": round((busy_lockers / len(lockers)) * 100) if lockers else 0,
         "alerts": alerts,
+        "history": history,
     }
 
 
