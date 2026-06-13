@@ -21,6 +21,9 @@ import {
   TrendingUp,
   Users,
   X,
+  Megaphone,
+  Eye,
+  MousePointerClick,
 } from 'lucide-react';
 import { api, subscribeWs } from '../lib/api';
 import { getLockerStatusMeta } from '../lib/lockerStatus';
@@ -236,6 +239,18 @@ export default function AdminUI() {
   const { activeTab = 'overview' } = useParams();
   const navigate = useNavigate();
 
+  // Advertisement state
+  const [ads, setAds] = useState([]);
+  const [editingAd, setEditingAd] = useState(null);
+  const [adForm, setAdForm] = useState({
+    position: 'kiosk',
+    text: '',
+    link_url: '',
+    image_url: '',
+    priority: 1,
+    is_active: 1,
+  });
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(rentalSearch);
@@ -295,7 +310,7 @@ export default function AdminUI() {
   async function loadAll(activeToken = token) {
     if (!activeToken) return;
     try {
-      const [lockerData, statData, rentalRes, logRes, settingsData, activeRes, stationData] = await Promise.all([
+      const [lockerData, statData, rentalRes, logRes, settingsData, activeRes, stationData, adData] = await Promise.all([
         api.getLockers(),
         api.adminStats(activeToken),
         api.adminRentals(activeToken, 1, 20, rentalFilter, debouncedSearch),
@@ -303,6 +318,7 @@ export default function AdminUI() {
         api.adminSettings(activeToken),
         api.adminRentals(activeToken, 1, 5, 'active', ''),
         api.getStations(),
+        api.adminGetAds(activeToken),
       ]);
       setLockers(lockerData);
       setStats(statData);
@@ -326,6 +342,7 @@ export default function AdminUI() {
       setSettings(settingsData || defaultSettings);
       setSettingsDraft(settingsData || defaultSettings);
       setStations(stationData || []);
+      setAds(adData || []);
       setNewLocker((current) => ({
         ...current,
         station_name: stationData && stationData.length > 0 ? stationData[0].name : ((settingsData || defaultSettings).station_name || current.station_name),
@@ -354,6 +371,7 @@ export default function AdminUI() {
           setActiveRentalMeta({ total: res.total, pages: res.pages });
         })
         .catch(console.error);
+      api.adminGetAds(token).then(setAds).catch(console.error);
     });
   }, [token, activeRentalPage, rentalPage, rentalFilter, debouncedSearch, logPage]);
 
@@ -508,6 +526,76 @@ export default function AdminUI() {
     }
   }
 
+  async function handleSaveAd(e) {
+    e.preventDefault();
+    if (!adForm.text.trim()) {
+      setMessage({ type: 'error', text: 'Vui lòng nhập nội dung quảng cáo.' });
+      return;
+    }
+    setLoading(true);
+    try {
+      if (editingAd) {
+        await api.adminUpdateAd(token, editingAd.id, adForm);
+        setMessage({ type: 'success', text: 'Cập nhật quảng cáo thành công.' });
+      } else {
+        await api.adminCreateAd(token, adForm);
+        setMessage({ type: 'success', text: 'Thêm quảng cáo thành công.' });
+      }
+      setEditingAd(null);
+      setAdForm({
+        position: 'kiosk',
+        text: '',
+        link_url: '',
+        image_url: '',
+        priority: 1,
+        is_active: 1,
+      });
+      const adData = await api.adminGetAds(token);
+      setAds(adData || []);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteAd(adId) {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa quảng cáo này không?')) return;
+    setLoading(true);
+    try {
+      await api.adminDeleteAd(token, adId);
+      setMessage({ type: 'success', text: 'Đã xóa quảng cáo.' });
+      const adData = await api.adminGetAds(token);
+      setAds(adData || []);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleToggleAdActive(ad) {
+    setLoading(true);
+    try {
+      const updatedAd = {
+        position: ad.position,
+        text: ad.text,
+        link_url: ad.link_url || '',
+        image_url: ad.image_url || '',
+        priority: ad.priority,
+        is_active: ad.is_active === 1 ? 0 : 1,
+      };
+      await api.adminUpdateAd(token, ad.id, updatedAd);
+      setMessage({ type: 'success', text: 'Cập nhật trạng thái thành công.' });
+      const adData = await api.adminGetAds(token);
+      setAds(adData || []);
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
   if (!token) {
     return (
       <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.9fr_1.1fr]">
@@ -581,6 +669,7 @@ export default function AdminUI() {
     { id: 'lockers', label: 'Sơ đồ tủ', icon: LockKeyhole },
     { id: 'orders', label: 'Đơn đặt tủ', icon: ReceiptText },
     { id: 'settings', label: 'Cấu hình', icon: Settings2 },
+    { id: 'ads', label: 'Quảng cáo', icon: Megaphone },
   ];
 
   return (
@@ -1028,6 +1117,271 @@ export default function AdminUI() {
             />
           </div>
         </>
+      )}
+
+      {activeTab === 'ads' && (
+        <div className="space-y-6 animate-fade-in">
+          {/* Ad Stats KPI Cards */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-xl border border-brand-100 bg-white p-5 shadow-xs flex items-center justify-between">
+              <div>
+                <div className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Tổng lượt hiển thị</div>
+                <div className="mt-1 text-2xl font-black text-slate-900">
+                  {ads.reduce((sum, ad) => sum + (ad.impressions || 0), 0).toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded-lg bg-brand-50 p-3 text-brand-600">
+                <Eye className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="rounded-xl border border-brand-100 bg-white p-5 shadow-xs flex items-center justify-between">
+              <div>
+                <div className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Tổng lượt nhấp</div>
+                <div className="mt-1 text-2xl font-black text-slate-900">
+                  {ads.reduce((sum, ad) => sum + (ad.clicks || 0), 0).toLocaleString()}
+                </div>
+              </div>
+              <div className="rounded-lg bg-brand-50 p-3 text-brand-600">
+                <MousePointerClick className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="rounded-xl border border-brand-100 bg-white p-5 shadow-xs flex items-center justify-between">
+              <div>
+                <div className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Tỷ lệ CTR trung bình</div>
+                <div className="mt-1 text-2xl font-black text-brand-700">
+                  {(() => {
+                    const totalImpressions = ads.reduce((sum, ad) => sum + (ad.impressions || 0), 0);
+                    const totalClicks = ads.reduce((sum, ad) => sum + (ad.clicks || 0), 0);
+                    return totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(1) : '0.0';
+                  })()}%
+                </div>
+              </div>
+              <div className="rounded-lg bg-emerald-50 p-3 text-emerald-650">
+                <Activity className="h-6 w-6" />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[400px_1fr]">
+          {/* Ad Create/Edit Form */}
+          <div className="baggo-surface rounded-lg border p-5 bg-white shadow-2xs">
+            <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+              <Megaphone className="h-5 w-5 text-brand-700" />
+              <h2 className="text-lg font-extrabold text-slate-800">
+                {editingAd ? 'Sửa quảng cáo' : 'Thêm quảng cáo mới'}
+              </h2>
+            </div>
+            <form onSubmit={handleSaveAd} className="mt-4 space-y-4">
+              <label className="block">
+                <span className="text-sm font-bold text-slate-700">Vị trí hiển thị</span>
+                <select
+                  value={adForm.position}
+                  onChange={(e) => setAdForm({ ...adForm, position: e.target.value })}
+                  className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none bg-white focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                >
+                  <option value="kiosk">Kiosk (Màn hình chính tại tủ)</option>
+                  <option value="client">Client (Trang đặt chỗ/quản lý khách hàng)</option>
+                </select>
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-700">Nội dung quảng cáo</span>
+                <textarea
+                  value={adForm.text}
+                  onChange={(e) => setAdForm({ ...adForm, text: e.target.value })}
+                  rows="3"
+                  placeholder="Nhập nội dung thông điệp quảng cáo..."
+                  className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-700">Đường dẫn liên kết (URL)</span>
+                <input
+                  type="text"
+                  value={adForm.link_url || ''}
+                  onChange={(e) => setAdForm({ ...adForm, link_url: e.target.value })}
+                  placeholder="https://example.com/promo"
+                  className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-sm font-bold text-slate-700">Ảnh quảng cáo (URL / Base64)</span>
+                <input
+                  type="text"
+                  value={adForm.image_url || ''}
+                  onChange={(e) => setAdForm({ ...adForm, image_url: e.target.value })}
+                  placeholder="Link ảnh hoặc mã base64 (tùy chọn)"
+                  className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="text-sm font-bold text-slate-700">Độ ưu tiên</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={adForm.priority}
+                    onChange={(e) => setAdForm({ ...adForm, priority: Number(e.target.value) })}
+                    className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-slate-700">Kích hoạt</span>
+                  <select
+                    value={adForm.is_active}
+                    onChange={(e) => setAdForm({ ...adForm, is_active: Number(e.target.value) })}
+                    className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none bg-white focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                  >
+                    <option value={1}>Hoạt động</option>
+                    <option value={0}>Tạm dừng</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                {editingAd && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingAd(null);
+                      setAdForm({
+                        position: 'kiosk',
+                        text: '',
+                        link_url: '',
+                        image_url: '',
+                        priority: 1,
+                        is_active: 1,
+                      });
+                    }}
+                    className="flex-1 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    Hủy
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="baggo-primary flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-extrabold disabled:opacity-60 transition"
+                >
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {editingAd ? 'Cập nhật' : 'Thêm mới'}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Ad Stats Table */}
+          <div className="baggo-surface rounded-lg border p-5 bg-white shadow-2xs">
+            <h2 className="text-lg font-extrabold text-slate-800 pb-3 border-b border-slate-100">
+              Danh sách và Thống kê quảng cáo
+            </h2>
+            <div className="mt-4 overflow-x-auto rounded-lg border border-slate-100">
+              <table className="w-full min-w-[700px] border-collapse text-left text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-500">
+                    <th className="py-3.5 px-4 font-extrabold">Nội dung</th>
+                    <th className="py-3.5 px-4 font-extrabold">Vị trí</th>
+                    <th className="py-3.5 px-4 font-extrabold text-center">Ưu tiên</th>
+                    <th className="py-3.5 px-4 font-extrabold text-center">Trạng thái</th>
+                    <th className="py-3.5 px-4 font-extrabold text-right">Hiển thị</th>
+                    <th className="py-3.5 px-4 font-extrabold text-right">Click</th>
+                    <th className="py-3.5 px-4 font-extrabold text-right">CTR</th>
+                    <th className="py-3.5 px-4 font-extrabold text-center">Hành động</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {ads.map((ad) => {
+                    const ctr = ad.impressions > 0 ? ((ad.clicks / ad.impressions) * 100).toFixed(1) + '%' : '0.0%';
+                    return (
+                      <tr key={ad.id} className="hover:bg-slate-50/50 transition">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            {ad.image_url ? (
+                              <img src={ad.image_url} alt="Ad thumbnail" className="h-9 w-9 rounded-lg object-cover border border-slate-150 flex-shrink-0" />
+                            ) : (
+                              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 border border-brand-100 text-brand-700 font-black text-xs flex-shrink-0">
+                                AD
+                              </div>
+                            )}
+                            <div>
+                              <div className="font-extrabold text-slate-800 line-clamp-1">{ad.text}</div>
+                              {ad.link_url && (
+                                <a href={ad.link_url} target="_blank" rel="noopener noreferrer" className="text-xs text-brand-600 hover:underline">
+                                  {ad.link_url}
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 font-extrabold text-slate-650">
+                          {ad.position === 'kiosk' ? 'Kiosk' : 'Client'}
+                        </td>
+                        <td className="py-3 px-4 text-center font-bold text-slate-700">{ad.priority}</td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAdActive(ad)}
+                            disabled={loading}
+                            className={`rounded-full px-2.5 py-0.5 text-xs font-extrabold border transition ${
+                              ad.is_active === 1
+                                ? 'bg-emerald-50 border-emerald-250 text-emerald-700 hover:bg-emerald-100'
+                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                            }`}
+                          >
+                            {ad.is_active === 1 ? 'Hoạt động' : 'Tạm dừng'}
+                          </button>
+                        </td>
+                        <td className="py-3 px-4 font-mono font-semibold text-right text-slate-700">{ad.impressions || 0}</td>
+                        <td className="py-3 px-4 font-mono font-semibold text-right text-slate-700">{ad.clicks || 0}</td>
+                        <td className="py-3 px-4 font-mono font-black text-right text-brand-700">{ctr}</td>
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingAd(ad);
+                                setAdForm({
+                                  position: ad.position,
+                                  text: ad.text,
+                                  link_url: ad.link_url || '',
+                                  image_url: ad.image_url || '',
+                                  priority: ad.priority,
+                                  is_active: ad.is_active,
+                                });
+                              }}
+                              className="text-xs font-extrabold text-brand-600 hover:text-brand-800"
+                            >
+                              Sửa
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAd(ad.id)}
+                              disabled={loading}
+                              className="text-xs font-extrabold text-rose-600 hover:text-rose-800"
+                            >
+                              Xóa
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {ads.length === 0 && (
+                    <tr>
+                      <td colSpan="8" className="py-12 text-center font-semibold text-slate-400 bg-white">
+                        Chưa có quảng cáo nào được cấu hình.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
       )}
 
       {/* Locker Details Drawer (Box hiện lên) */}

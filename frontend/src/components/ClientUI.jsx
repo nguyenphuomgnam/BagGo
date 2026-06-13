@@ -250,6 +250,10 @@ export default function ClientUI() {
   const [paymentModalData, setPaymentModalData] = useState(null);
   const [showRentMore, setShowRentMore] = useState(false);
 
+  // Advertisement State
+  const [ads, setAds] = useState([]);
+  const [activeAdIndex, setActiveAdIndex] = useState(0);
+
   const filteredLockers = useMemo(() => {
     return lockers.filter((locker) => locker.station_name === selectedStationName);
   }, [lockers, selectedStationName]);
@@ -263,6 +267,41 @@ export default function ClientUI() {
       }
     } catch (err) {
       console.warn('Failed to load stations', err);
+    }
+  }
+
+  async function loadAds() {
+    try {
+      const data = await api.getAds('client');
+      setAds(data);
+    } catch (err) {
+      console.warn('load ads failed', err);
+    }
+  }
+
+  // Record impression for active ad
+  useEffect(() => {
+    if (ads && ads.length > 0) {
+      const currentAd = ads[activeAdIndex];
+      if (currentAd) {
+        api.recordAdImpression(currentAd.id).catch(console.error);
+      }
+    }
+  }, [ads, activeAdIndex]);
+
+  // Rotate ads every 8 seconds
+  useEffect(() => {
+    if (ads.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveAdIndex((prev) => (prev + 1) % ads.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [ads]);
+
+  function handleAdClick(ad) {
+    api.recordAdClick(ad.id).catch(console.error);
+    if (ad.link_url) {
+      window.open(ad.link_url, '_blank');
     }
   }
 
@@ -315,11 +354,13 @@ export default function ClientUI() {
     loadConfig();
     loadStations();
     loadLockers();
+    loadAds();
     if (!token) {
       // Periodic refresh when logged out to show locker status correctly
       const interval = setInterval(() => {
         loadLockers();
         loadStations();
+        loadAds();
       }, 5000);
       return () => clearInterval(interval);
     }
@@ -327,6 +368,7 @@ export default function ClientUI() {
       loadRentals();
       loadLockers();
       loadStations();
+      loadAds();
     });
   }, [token]);
 
@@ -703,6 +745,46 @@ export default function ClientUI() {
               </section>
             </div>
           </div>
+          {/* Banner quảng cáo chèn cho khách hàng */}
+          {ads && ads.length > 0 && (() => {
+            const currentAd = ads[activeAdIndex];
+            const hasImage = !!currentAd.image_url;
+            return (
+              <div 
+                onClick={() => handleAdClick(currentAd)}
+                className="mx-auto max-w-5xl mt-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-end"
+              >
+                {hasImage ? (
+                  <>
+                    <img 
+                      src={currentAd.image_url} 
+                      alt={currentAd.text} 
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
+                  </>
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-650 to-brand-500" />
+                )}
+                
+                <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
+                  <div className="text-white space-y-1.5 max-w-[70%] text-left">
+                    <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans">
+                      Đăng Ký & Ưu Đãi
+                    </span>
+                    <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2 font-sans">
+                      {currentAd.text}
+                    </h3>
+                  </div>
+                  {currentAd.link_url && (
+                    <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0 font-sans">
+                      Xem ngay
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
           <Footer />
         </div>
       );
@@ -902,6 +984,46 @@ export default function ClientUI() {
             </div>
           </section>
         </div>
+        {/* Banner quảng cáo chèn cho khách hàng */}
+        {ads && ads.length > 0 && (() => {
+          const currentAd = ads[activeAdIndex];
+          const hasImage = !!currentAd.image_url;
+          return (
+            <div 
+              onClick={() => handleAdClick(currentAd)}
+              className="mx-auto max-w-5xl mt-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-end"
+            >
+              {hasImage ? (
+                <>
+                  <img 
+                    src={currentAd.image_url} 
+                    alt={currentAd.text} 
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
+                </>
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-650 to-brand-500" />
+              )}
+              
+              <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
+                <div className="text-white space-y-1.5 max-w-[70%] text-left">
+                  <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans">
+                    Đăng Ký & Ưu Đãi
+                  </span>
+                  <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2 font-sans">
+                    {currentAd.text}
+                  </h3>
+                </div>
+                {currentAd.link_url && (
+                  <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0 font-sans">
+                    Xem ngay
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
         <Footer />
       </div>
     );
@@ -1246,6 +1368,48 @@ export default function ClientUI() {
         paymentType={paymentModalData?.paymentType || 'checkin'}
         token={token}
       />
+
+      {/* Banner quảng cáo chèn cho khách hàng */}
+      {ads && ads.length > 0 && (() => {
+        const currentAd = ads[activeAdIndex];
+        const hasImage = !!currentAd.image_url;
+        return (
+          <div 
+            onClick={() => handleAdClick(currentAd)}
+            className="mx-auto max-w-5xl mt-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-end"
+          >
+            {hasImage ? (
+              <>
+                <img 
+                  src={currentAd.image_url} 
+                  alt={currentAd.text} 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
+              </>
+            ) : (
+              <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-650 to-brand-500" />
+            )}
+            
+            <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
+              <div className="text-white space-y-1.5 max-w-[70%] text-left">
+                <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans">
+                  Đăng Ký & Ưu Đãi
+                </span>
+                <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2 font-sans">
+                  {currentAd.text}
+                </h3>
+              </div>
+              {currentAd.link_url && (
+                <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0 font-sans">
+                  Xem ngay
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       <Footer />
     </div>
   );

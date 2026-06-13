@@ -2,7 +2,7 @@ const STATUS_META = {
   AVAILABLE: {
     label: 'Trống',
     hint: 'Sẵn sàng nhận hành lý',
-    className: 'border-brand-200 bg-brand-50 text-brand-700',
+    className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
   },
   RESERVED: {
     label: 'Giữ chỗ',
@@ -12,7 +12,7 @@ const STATUS_META = {
   REGISTERING: {
     label: 'Đang đăng ký',
     hint: 'Chưa hoàn tất xác thực',
-    className: 'border-sky-200 bg-sky-50 text-sky-700',
+    className: 'border-amber-200 bg-amber-50 text-amber-700',
   },
   AWAITING_PAYMENT: {
     label: 'Chờ thanh toán',
@@ -27,7 +27,7 @@ const STATUS_META = {
   OVERTIME: {
     label: 'Quá giờ',
     hint: 'Phiên đã hết hạn',
-    className: 'border-orange-200 bg-orange-50 text-orange-700',
+    className: 'border-rose-200 bg-rose-50 text-rose-700',
   },
   ADMIN_INTERVENTION: {
     label: 'Can thiệp',

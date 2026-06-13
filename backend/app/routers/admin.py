@@ -500,3 +500,86 @@ def delete_station(station_id: int):
     conn.commit()
     conn.close()
     return {"status": "ok", "deleted_station_id": station_id}
+
+
+class AdvertisementCreateRequest(BaseModel):
+    position: str = Field(min_length=1, max_length=50)
+    text: str = Field(min_length=1, max_length=500)
+    link_url: str | None = Field(default=None)
+    image_url: str | None = Field(default=None)
+    priority: int = Field(default=1, ge=1)
+    is_active: int = Field(default=1, ge=0, le=1)
+
+
+@router.get("/admin/ads", dependencies=[Depends(require_admin)])
+def admin_get_ads():
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM advertisements ORDER BY priority DESC, id DESC").fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+@router.post("/admin/ads", dependencies=[Depends(require_admin)])
+def admin_create_ad(payload: AdvertisementCreateRequest):
+    conn = get_db()
+    cursor = conn.execute(
+        """
+        INSERT INTO advertisements (position, text, link_url, image_url, priority, is_active)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            payload.position.strip(),
+            payload.text.strip(),
+            payload.link_url.strip() if payload.link_url else None,
+            payload.image_url.strip() if payload.image_url else None,
+            payload.priority,
+            payload.is_active,
+        ),
+    )
+    ad_id = cursor.lastrowid
+    conn.commit()
+    row = conn.execute("SELECT * FROM advertisements WHERE id = ?", (ad_id,)).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@router.put("/admin/ads/{ad_id}", dependencies=[Depends(require_admin)])
+def admin_update_ad(ad_id: int, payload: AdvertisementCreateRequest):
+    conn = get_db()
+    ad = conn.execute("SELECT * FROM advertisements WHERE id = ?", (ad_id,)).fetchone()
+    if not ad:
+        conn.close()
+        raise HTTPException(404, "Không tìm thấy quảng cáo")
+    conn.execute(
+        """
+        UPDATE advertisements
+        SET position = ?, text = ?, link_url = ?, image_url = ?, priority = ?, is_active = ?
+        WHERE id = ?
+        """,
+        (
+            payload.position.strip(),
+            payload.text.strip(),
+            payload.link_url.strip() if payload.link_url else None,
+            payload.image_url.strip() if payload.image_url else None,
+            payload.priority,
+            payload.is_active,
+            ad_id,
+        ),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM advertisements WHERE id = ?", (ad_id,)).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@router.delete("/admin/ads/{ad_id}", dependencies=[Depends(require_admin)])
+def admin_delete_ad(ad_id: int):
+    conn = get_db()
+    ad = conn.execute("SELECT * FROM advertisements WHERE id = ?", (ad_id,)).fetchone()
+    if not ad:
+        conn.close()
+        raise HTTPException(404, "Không tìm thấy quảng cáo")
+    conn.execute("DELETE FROM advertisements WHERE id = ?", (ad_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "ok", "deleted_ad_id": ad_id}

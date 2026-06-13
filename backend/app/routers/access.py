@@ -501,3 +501,44 @@ def get_stations():
     ).fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+
+@router.get("/ads")
+def get_ads(position: str = None):
+    conn = get_db()
+    query = "SELECT * FROM advertisements WHERE is_active = 1"
+    params = []
+    if position:
+        query += " AND position = ?"
+        params.append(position.strip())
+    query += " ORDER BY priority DESC, id DESC"
+    rows = conn.execute(query, params).fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+@router.post("/ads/{ad_id}/impression")
+def record_ad_impression(ad_id: int):
+    conn = get_db()
+    conn.execute(
+        "UPDATE advertisements SET impressions = COALESCE(impressions, 0) + 1 WHERE id = ?",
+        (ad_id,),
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "ok"}
+
+
+@router.post("/ads/{ad_id}/click")
+def record_ad_click(ad_id: int):
+    conn = get_db()
+    conn.execute(
+        "UPDATE advertisements SET clicks = COALESCE(clicks, 0) + 1 WHERE id = ?",
+        (ad_id,),
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "ok"}
+
+
+

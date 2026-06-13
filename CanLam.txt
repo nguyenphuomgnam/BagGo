@@ -9,7 +9,7 @@
 +  color  tủ  trống  
 +  color tủ có người  
 +  color tủ đang được  thuê  
-+  Hiện  thị  tick  chính sách !
+
 - Admin :
 +   phần  hiển  thị  + thêm  tủ  bớt tủ +  giá tiền +  tgian 
 +  nắm đc  oder đặt  hàng

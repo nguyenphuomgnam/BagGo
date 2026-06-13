@@ -180,4 +180,11 @@ export const api = {
   createStation: (token, body) => request('/api/admin/stations', { method: 'POST', token, body }),
   updateStation: (token, id, body) => request(`/api/admin/stations/${id}`, { method: 'PUT', token, body }),
   deleteStation: (token, id) => request(`/api/admin/stations/${id}`, { method: 'DELETE', token }),
+  getAds: (position) => request(`/api/ads?position=${position || ''}`),
+  recordAdImpression: (id) => request(`/api/ads/${id}/impression`, { method: 'POST' }),
+  recordAdClick: (id) => request(`/api/ads/${id}/click`, { method: 'POST' }),
+  adminGetAds: (token) => request('/api/admin/ads', { token }),
+  adminCreateAd: (token, body) => request('/api/admin/ads', { method: 'POST', token, body }),
+  adminUpdateAd: (token, id, body) => request(`/api/admin/ads/${id}`, { method: 'PUT', token, body }),
+  adminDeleteAd: (token, id) => request(`/api/admin/ads/${id}`, { method: 'DELETE', token }),
 };

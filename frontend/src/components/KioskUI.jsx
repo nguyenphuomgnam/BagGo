@@ -69,6 +69,10 @@ export default function KioskUI() {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
 
+  // Advertisement State
+  const [ads, setAds] = useState([]);
+  const [activeAdIndex, setActiveAdIndex] = useState(0);
+
   const availableCount = useMemo(
     () => lockers.filter((locker) => locker.status === 'AVAILABLE').length,
     [lockers],
@@ -107,15 +111,51 @@ export default function KioskUI() {
     }
   }
 
+  async function loadAds() {
+    try {
+      const data = await api.getAds('kiosk');
+      setAds(data);
+    } catch (err) {
+      console.warn('load ads failed', err);
+    }
+  }
+
   useEffect(() => {
     loadLockers();
     loadConfig();
+    loadAds();
     const unsubscribe = subscribeWs(() => loadLockers());
     return () => {
       unsubscribe();
       stopCamera();
     };
   }, []);
+
+  // Record impression for active ad
+  useEffect(() => {
+    if (ads && ads.length > 0) {
+      const currentAd = ads[activeAdIndex];
+      if (currentAd) {
+        api.recordAdImpression(currentAd.id).catch(console.error);
+      }
+    }
+  }, [ads, activeAdIndex]);
+
+  // Rotate ads every 8 seconds
+  useEffect(() => {
+    if (ads.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveAdIndex((prev) => (prev + 1) % ads.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [ads]);
+
+  function handleAdClick(ad) {
+    api.recordAdClick(ad.id).catch(console.error);
+    if (ad.link_url) {
+      window.open(ad.link_url, '_blank');
+    }
+  }
 
   useEffect(() => {
     if (step === 'face-register' || step === 'face-identify') {
@@ -445,13 +485,33 @@ export default function KioskUI() {
               hint: locker.status_hint,
             });
             const selected = selectedLocker?.id === locker.id;
+
+            // Xử lý màu sắc động và cực kỳ bắt mắt dựa theo trạng thái
+            let statusColorClass = '';
+            const statusKey = displayStatus;
+            if (statusKey === 'AVAILABLE') {
+              statusColorClass = selected
+                ? 'border-emerald-600 ring-2 ring-emerald-600/20 bg-emerald-100/50 text-emerald-950 font-extrabold shadow-sm'
+                : 'border-emerald-200 bg-emerald-50/20 text-slate-800 hover:border-emerald-400 hover:bg-emerald-50/40';
+            } else if (['RESERVED', 'REGISTERING', 'AWAITING_PAYMENT'].includes(statusKey)) {
+              statusColorClass = selected
+                ? 'border-amber-600 ring-2 ring-amber-600/20 bg-amber-100/50 text-amber-950 font-extrabold shadow-sm'
+                : 'border-amber-200 bg-amber-50/20 text-slate-800 hover:border-amber-400 hover:bg-amber-50/40';
+            } else if (['OCCUPIED', 'OVERTIME'].includes(statusKey)) {
+              statusColorClass = selected
+                ? 'border-rose-600 ring-2 ring-rose-600/20 bg-rose-100/50 text-rose-950 font-extrabold shadow-sm'
+                : 'border-rose-200 bg-rose-50/20 text-slate-800 hover:border-rose-400 hover:bg-rose-50/40';
+            } else {
+              statusColorClass = selected
+                ? 'border-brand-600 ring-2 ring-brand-600/15 bg-brand-50'
+                : 'border-slate-100 bg-white hover:border-slate-350';
+            }
+
             return (
               <button
                 key={locker.id}
                 onClick={() => chooseLocker(locker)}
-                className={`min-h-32 rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${
-                  selected ? 'border-brand-600 ring-2 ring-brand-600/15 bg-brand-50' : 'border-brand-100 bg-white'
-                } ${locker.status === 'AVAILABLE' ? '' : 'bg-brand-50/60'}`}
+                className={`min-h-32 rounded-lg border p-4 text-left transition hover:-translate-y-0.5 hover:shadow-md ${statusColorClass}`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="text-lg font-extrabold">{locker.name}</div>
@@ -471,6 +531,47 @@ export default function KioskUI() {
             );
           })}
         </div>
+
+        {/* Banner quảng cáo chèn (được quản lý bởi admin) */}
+        {ads && ads.length > 0 && (() => {
+          const currentAd = ads[activeAdIndex];
+          const hasImage = !!currentAd.image_url;
+          return (
+            <div 
+              onClick={() => handleAdClick(currentAd)}
+              className="mt-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-end"
+            >
+              {hasImage ? (
+                <>
+                  <img 
+                    src={currentAd.image_url} 
+                    alt={currentAd.text} 
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
+                </>
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-650 to-brand-500" />
+              )}
+              
+              <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
+                <div className="text-white space-y-1.5 max-w-[70%]">
+                  <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+                    Khuyến mãi & Đối tác
+                  </span>
+                  <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2">
+                    {currentAd.text}
+                  </h3>
+                </div>
+                {currentAd.link_url && (
+                  <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0">
+                    Xem ngay
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </section>
 
       {/* Modal Popup for Kiosk Actions */}
