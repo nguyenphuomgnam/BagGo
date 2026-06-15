@@ -2,7 +2,7 @@ import os
 import sqlite3
 from pathlib import Path
 
-DB_PATH = os.getenv("BAGGO_DB_PATH", str(Path(__file__).resolve().parents[1] / "locker.db"))
+DB_PATH = os.getenv("BAGO_DB_PATH", os.getenv("BAGGO_DB_PATH", str(Path(__file__).resolve().parents[1] / "locker.db")))
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
@@ -86,8 +86,8 @@ def init_db():
             address TEXT
         );
         INSERT OR IGNORE INTO stations (name, latitude, longitude, address) VALUES ('Trạm MVP', 10.7725, 106.6679, '100 Đường 3/2, Quận 10, TP. Hồ Chí Minh');
-        INSERT OR IGNORE INTO stations (name, latitude, longitude, address) VALUES ('Trạm BagGo Quận 1', 10.7769, 106.7009, 'Hồ Tùng Mậu, Bến Nghé, Quận 1, TP. Hồ Chí Minh');
-        INSERT OR IGNORE INTO stations (name, latitude, longitude, address) VALUES ('Trạm BagGo Quận 3', 10.7798, 106.6818, '200 Nguyễn Đình Chiểu, Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh');
+        INSERT OR IGNORE INTO stations (name, latitude, longitude, address) VALUES ('Trạm Bago Quận 1', 10.7769, 106.7009, 'Hồ Tùng Mậu, Bến Nghé, Quận 1, TP. Hồ Chí Minh');
+        INSERT OR IGNORE INTO stations (name, latitude, longitude, address) VALUES ('Trạm Bago Quận 3', 10.7798, 106.6818, '200 Nguyễn Đình Chiểu, Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh');
 
         CREATE TABLE IF NOT EXISTS advertisements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

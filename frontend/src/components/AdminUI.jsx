@@ -685,7 +685,7 @@ export default function AdminUI() {
           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-brand-600 text-white">
             <ShieldAlert className="h-6 w-6" />
           </div>
-          <h1 className="mt-4 text-2xl font-extrabold tracking-tight">Admin BAGGO</h1>
+          <h1 className="mt-4 text-2xl font-extrabold tracking-tight">Admin BAGO</h1>
           <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
             Dùng mật khẩu từ biến môi trường <span className="font-extrabold text-slate-700">ADMIN_PASSWORD</span>. Nếu chưa cấu hình, backend dùng mật khẩu demo.
           </p>

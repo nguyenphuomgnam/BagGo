@@ -514,16 +514,25 @@ def delete_station(station_id: int):
         conn.close()
         raise HTTPException(404, "Không tìm thấy trạm")
     
-    # Kiểm tra xem có tủ khóa nào thuộc trạm này không
-    lockers = conn.execute("SELECT COUNT(*) FROM lockers WHERE station_name = ?", (station["name"],)).fetchone()[0]
-    if lockers > 0:
+    # Kiểm tra xem các tủ thuộc trạm này có đang trong phiên thuê nào hoạt động không
+    active_rentals = conn.execute("""
+        SELECT COUNT(*) FROM rentals r
+        JOIN lockers l ON r.locker_id = l.id
+        WHERE l.station_name = ? AND r.status IN ('RESERVED', 'RENTED', 'OVERTIME')
+    """, (station["name"],)).fetchone()[0]
+    
+    if active_rentals > 0:
         conn.close()
-        raise HTTPException(400, "Không thể xóa trạm vì đang có ngăn tủ hoạt động tại trạm này")
+        raise HTTPException(400, "Không thể xóa trạm vì đang có ngăn tủ đang được sử dụng hoặc đặt trước tại trạm này")
         
+    # Tự động xóa các ngăn tủ thuộc trạm này nếu không có phiên thuê hoạt động
+    conn.execute("DELETE FROM lockers WHERE station_name = ?", (station["name"],))
+    
     conn.execute("DELETE FROM stations WHERE id = ?", (station_id,))
     conn.commit()
     conn.close()
     return {"status": "ok", "deleted_station_id": station_id}
+
 
 
 class AdvertisementCreateRequest(BaseModel):

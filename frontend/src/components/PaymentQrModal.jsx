@@ -144,7 +144,7 @@ export default function PaymentQrModal({
                 {/* QR Center logo */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="rounded-md bg-brand-600 px-1.5 py-0.5 text-3xs font-extrabold text-white uppercase shadow-md">
-                    BAGGO
+                    BAGO
                   </div>
                 </div>
               </div>
@@ -152,7 +152,7 @@ export default function PaymentQrModal({
               <div className="mt-3 text-center space-y-0.5 text-xs font-semibold text-slate-500">
                 <div>Chủ tài khoản: <span className="font-extrabold text-slate-800 uppercase">CONG TY BAGO VIET NAM</span></div>
                 <div>Số tài khoản: <span className="font-mono font-bold text-slate-800">0123456789</span></div>
-                <div>Nội dung: <span className="font-mono font-extrabold text-brand-700">BAGGO RENTAL {rentalId}</span></div>
+                <div>Nội dung: <span className="font-mono font-extrabold text-brand-700">BAGO RENTAL {rentalId}</span></div>
               </div>
             </div>
 

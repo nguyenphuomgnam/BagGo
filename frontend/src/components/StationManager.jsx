@@ -95,7 +95,7 @@ export default function StationManager({
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ví dụ: Trạm BagGo Quận 1"
+              placeholder="Ví dụ: Trạm Bago Quận 1"
               className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
             />
           </label>

@@ -17,7 +17,7 @@ function Shell() {
       <header className="sticky top-0 z-40 border-b border-brand-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center">
-            <img src="/brand/baggo-logo.svg" alt="BAGGO Smart Locker" className="h-12 w-auto max-w-[210px] object-contain" />
+            <img src="/brand/bago-logo.svg" alt="BAGO Smart Locker" className="h-12 w-auto max-w-[210px] object-contain" />
           </div>
           <nav className="flex flex-wrap gap-2">
             {links.map(({ to, label, icon: Icon }) => (

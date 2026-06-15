@@ -207,7 +207,7 @@ function Footer() {
       <div className="mx-auto max-w-5xl px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-semibold text-slate-500">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-extrabold text-slate-800">BagGo IoT Smart Locker System</span>
+          <span className="font-extrabold text-slate-800">Bago IoT Smart Locker System</span>
           <span>·</span>
           <span>© {new Date().getFullYear()}</span>
         </div>
@@ -725,7 +725,7 @@ export default function ClientUI() {
               <section className="baggo-surface rounded-2xl border p-5 shadow-sm bg-white">
                 <h2 className="mb-3 flex items-center gap-2 text-sm font-extrabold text-slate-800">
                   <MapPin className="h-4 w-4 text-brand-600" />
-                  Bản đồ chọn trạm BagGo
+                  Bản đồ chọn trạm Bago
                 </h2>
                 <StationMap
                   stations={stations}
@@ -967,7 +967,7 @@ export default function ClientUI() {
             <section className="baggo-surface rounded-2xl border p-5 shadow-sm bg-white">
               <h2 className="mb-3 flex items-center gap-2 text-sm font-extrabold text-slate-800">
                 <MapPin className="h-4 w-4 text-brand-600" />
-                Bản đồ mạng lưới trạm BagGo
+                Bản đồ mạng lưới trạm Bago
               </h2>
               <StationMap
                 stations={stations}
@@ -978,7 +978,7 @@ export default function ClientUI() {
 
             {/* Station List / Quick Guide */}
             <section className="baggo-surface rounded-2xl border p-5 shadow-sm bg-white">
-              <h2 className="mb-4 text-sm font-extrabold text-slate-900">Hướng dẫn vận hành tủ BagGo</h2>
+              <h2 className="mb-4 text-sm font-extrabold text-slate-900">Hướng dẫn vận hành tủ Bago</h2>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-4 space-y-2 text-left">
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-50 text-brand-600 text-xs font-black">1</span>
