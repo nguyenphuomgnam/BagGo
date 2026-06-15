@@ -23,6 +23,10 @@ app.mount("/kiosk", StaticFiles(directory=str(BASE_DIR / "static" / "kiosk"), ht
 app.mount("/admin", StaticFiles(directory=str(BASE_DIR / "static" / "admin"), html=True), name="admin")
 app.mount("/remote", StaticFiles(directory=str(BASE_DIR / "static" / "remote"), html=True), name="remote")
 
+uploads_dir = BASE_DIR / "static" / "uploads"
+uploads_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
 @app.on_event("startup")
 async def startup():
     init_db()

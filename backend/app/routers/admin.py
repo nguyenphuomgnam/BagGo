@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, UploadFile, File
+import shutil
+import uuid
+from pathlib import Path
 from pydantic import BaseModel, Field
 
 from app.database import get_db
@@ -604,3 +607,25 @@ def admin_delete_ad(ad_id: int):
     conn.commit()
     conn.close()
     return {"status": "ok", "deleted_ad_id": ad_id}
+
+
+@router.post("/admin/upload-ad-image")
+async def upload_ad_image(file: UploadFile = File(...), _: bool = Depends(require_admin)):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(400, "Chỉ chấp nhận file ảnh")
+    
+    upload_dir = Path(__file__).resolve().parents[2] / "static" / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    
+    ext = Path(file.filename).suffix or ".jpg"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    file_path = upload_dir / filename
+    
+    try:
+        with file_path.open("wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(500, f"Không thể lưu file: {str(e)}")
+        
+    return {"url": f"/uploads/{filename}"}
+

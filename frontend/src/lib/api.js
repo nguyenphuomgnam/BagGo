@@ -180,11 +180,44 @@ export const api = {
   createStation: (token, body) => request('/api/admin/stations', { method: 'POST', token, body }),
   updateStation: (token, id, body) => request(`/api/admin/stations/${id}`, { method: 'PUT', token, body }),
   deleteStation: (token, id) => request(`/api/admin/stations/${id}`, { method: 'DELETE', token }),
-  getAds: (position) => request(`/api/ads?position=${position || ''}`),
+  getAds: async (position) => {
+    const ads = await request(`/api/ads?position=${position || ''}`);
+    return ads.map(ad => {
+      if (ad.image_url && ad.image_url.startsWith('/uploads/')) {
+        ad.image_url = `${API_BASE}${ad.image_url}`;
+      }
+      return ad;
+    });
+  },
   recordAdImpression: (id) => request(`/api/ads/${id}/impression`, { method: 'POST' }),
   recordAdClick: (id) => request(`/api/ads/${id}/click`, { method: 'POST' }),
-  adminGetAds: (token) => request('/api/admin/ads', { token }),
-  adminCreateAd: (token, body) => request('/api/admin/ads', { method: 'POST', token, body }),
-  adminUpdateAd: (token, id, body) => request(`/api/admin/ads/${id}`, { method: 'PUT', token, body }),
+  adminGetAds: async (token) => {
+    const ads = await request('/api/admin/ads', { token });
+    return ads.map(ad => {
+      if (ad.image_url && ad.image_url.startsWith('/uploads/')) {
+        ad.image_url = `${API_BASE}${ad.image_url}`;
+      }
+      return ad;
+    });
+  },
+  adminCreateAd: (token, body) => {
+    const formattedBody = { ...body };
+    if (formattedBody.image_url && formattedBody.image_url.startsWith(API_BASE)) {
+      formattedBody.image_url = formattedBody.image_url.substring(API_BASE.length);
+    }
+    return request('/api/admin/ads', { method: 'POST', token, body: formattedBody });
+  },
+  adminUpdateAd: (token, id, body) => {
+    const formattedBody = { ...body };
+    if (formattedBody.image_url && formattedBody.image_url.startsWith(API_BASE)) {
+      formattedBody.image_url = formattedBody.image_url.substring(API_BASE.length);
+    }
+    return request(`/api/admin/ads/${id}`, { method: 'PUT', token, body: formattedBody });
+  },
   adminDeleteAd: (token, id) => request(`/api/admin/ads/${id}`, { method: 'DELETE', token }),
+  adminUploadAdImage: (token, file) => {
+    const body = new FormData();
+    body.append('file', file);
+    return request('/api/admin/upload-ad-image', { method: 'POST', token, body, timeoutMs: 30000 });
+  },
 };

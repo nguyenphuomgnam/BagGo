@@ -24,6 +24,7 @@ import {
   Megaphone,
   Eye,
   MousePointerClick,
+  Upload,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -40,7 +41,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { api, subscribeWs } from '../lib/api';
+import { api, subscribeWs, API_BASE } from '../lib/api';
 import { getLockerStatusMeta } from '../lib/lockerStatus';
 import StationManager from './StationManager';
 
@@ -311,6 +312,7 @@ export default function AdminUI() {
     priority: 1,
     is_active: 1,
   });
+  const [uploadingAdImage, setUploadingAdImage] = useState(false);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -586,6 +588,23 @@ export default function AdminUI() {
       setMessage({ type: 'error', text: err.message });
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleUploadImage(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingAdImage(true);
+    setMessage({ type: 'info', text: 'Đang tải ảnh lên...' });
+    try {
+      const res = await api.adminUploadAdImage(token, file);
+      setAdForm((prev) => ({ ...prev, image_url: `${API_BASE}${res.url}` }));
+      setMessage({ type: 'success', text: 'Tải ảnh lên thành công.' });
+    } catch (err) {
+      setMessage({ type: 'error', text: `Lỗi tải ảnh: ${err.message}` });
+    } finally {
+      setUploadingAdImage(false);
     }
   }
 
@@ -1431,16 +1450,33 @@ export default function AdminUI() {
                 />
               </label>
 
-              <label className="block">
+              <div className="block">
                 <span className="text-sm font-bold text-slate-700">Ảnh quảng cáo (URL / Base64)</span>
-                <input
-                  type="text"
-                  value={adForm.image_url || ''}
-                  onChange={(e) => setAdForm({ ...adForm, image_url: e.target.value })}
-                  placeholder="Link ảnh hoặc mã base64 (tùy chọn)"
-                  className="mt-1.5 w-full rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
-                />
-              </label>
+                <div className="mt-1.5 flex gap-2">
+                  <input
+                    type="text"
+                    value={adForm.image_url || ''}
+                    onChange={(e) => setAdForm({ ...adForm, image_url: e.target.value })}
+                    placeholder="Link ảnh hoặc mã base64 (tùy chọn)"
+                    className="flex-1 min-w-0 rounded-lg border border-brand-100 px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-500/20 transition-all duration-200"
+                  />
+                  <label className="cursor-pointer inline-flex items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3.5 py-2.5 text-sm font-bold text-brand-700 hover:bg-brand-100 transition shrink-0 select-none">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUploadImage}
+                      className="hidden"
+                      disabled={uploadingAdImage}
+                    />
+                    {uploadingAdImage ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    Tải ảnh
+                  </label>
+                </div>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <label className="block">

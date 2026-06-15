@@ -539,36 +539,41 @@ export default function KioskUI() {
           return (
             <div 
               onClick={() => handleAdClick(currentAd)}
-              className="mt-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-end"
+              className="mt-6 mb-6 cursor-pointer relative overflow-hidden rounded-2xl h-64 md:h-72 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-center justify-center bg-slate-950"
             >
               {hasImage ? (
                 <>
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center filter blur-3xl scale-125 opacity-50 select-none pointer-events-none" 
+                    style={{ backgroundImage: `url(${currentAd.image_url})` }} 
+                  />
+                  <div className="absolute inset-0 bg-slate-950/20" />
                   <img 
                     src={currentAd.image_url} 
                     alt={currentAd.text} 
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                    className="relative z-10 h-full w-auto object-contain transition-transform duration-700 group-hover:scale-[1.01]" 
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
                 </>
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
+                  <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6 self-end">
+                    <div className="text-white space-y-1.5 max-w-[70%]">
+                      <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+                        Khuyến mãi & Đối tác
+                      </span>
+                      <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2">
+                        {currentAd.text}
+                      </h3>
+                    </div>
+                    {currentAd.link_url && (
+                      <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0">
+                        Xem ngay
+                      </span>
+                    )}
+                  </div>
+                </>
               )}
-              
-              <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
-                <div className="text-white space-y-1.5 max-w-[70%]">
-                  <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
-                    Khuyến mãi & Đối tác
-                  </span>
-                  <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2">
-                    {currentAd.text}
-                  </h3>
-                </div>
-                {currentAd.link_url && (
-                  <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0">
-                    Xem ngay
-                  </span>
-                )}
-              </div>
             </div>
           );
         })()}

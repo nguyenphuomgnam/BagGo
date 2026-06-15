@@ -534,8 +534,9 @@ export default function ClientUI() {
       return (
         <div className="mx-auto max-w-5xl space-y-5 animate-fade-in">
           <div className="grid gap-6 lg:grid-cols-[400px_1fr] items-start">
-            {/* LEFT COLUMN: Booking Configuration */}
-            <section className="baggo-surface rounded-2xl border border-brand-100 p-6 bg-white flex flex-col gap-5 shadow-[0_12px_30px_-4px_rgba(18,139,77,0.06)] transition-all duration-300 hover:shadow-[0_20px_40px_-4px_rgba(18,139,77,0.12)]">
+            {/* LEFT COLUMN: Booking Configuration & Ad */}
+            <div className="space-y-5">
+              <section className="baggo-surface rounded-2xl border border-brand-100 p-6 bg-white flex flex-col gap-5 shadow-[0_12px_30px_-4px_rgba(18,139,77,0.06)] transition-all duration-300 hover:shadow-[0_20px_40px_-4px_rgba(18,139,77,0.12)]">
               <div className="space-y-4">
                 {/* Header */}
                 <div className="flex items-center gap-4">
@@ -673,6 +674,51 @@ export default function ClientUI() {
               </div>
             </section>
 
+            {/* Ad Banner inside left column */}
+            {ads && ads.length > 0 && (() => {
+              const currentAd = ads[activeAdIndex];
+              const hasImage = !!currentAd.image_url;
+              return (
+                <div 
+                  onClick={() => handleAdClick(currentAd)}
+                  className="cursor-pointer relative overflow-hidden rounded-2xl h-48 sm:h-56 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-center justify-center bg-slate-950"
+                >
+                  {hasImage ? (
+                    <>
+                      <div 
+                        className="absolute inset-0 bg-cover bg-center filter blur-3xl scale-125 opacity-50 select-none pointer-events-none" 
+                        style={{ backgroundImage: `url(${currentAd.image_url})` }} 
+                      />
+                      <div className="absolute inset-0 bg-slate-950/20" />
+                      <img 
+                        src={currentAd.image_url} 
+                        alt={currentAd.text} 
+                        className="relative z-10 h-full w-auto object-contain transition-transform duration-700 group-hover:scale-[1.01]" 
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
+                      <div className="relative z-10 w-full p-6 flex flex-col justify-end h-full text-left">
+                        <span className="inline-block self-start rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans mb-1.5">
+                          Đăng Ký & Ưu Đãi
+                        </span>
+                        <h3 className="text-sm font-black leading-snug drop-shadow-sm line-clamp-2 font-sans text-white">
+                          {currentAd.text}
+                        </h3>
+                        {currentAd.link_url && (
+                          <span className="mt-3 self-start rounded-lg bg-white px-3 py-1.5 text-[10px] font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 font-sans">
+                            Xem ngay
+                          </span>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+
             {/* RIGHT COLUMN: Map & Locker Selection */}
             <div className="space-y-5">
               {/* Map */}
@@ -745,46 +791,6 @@ export default function ClientUI() {
               </section>
             </div>
           </div>
-          {/* Banner quảng cáo chèn cho khách hàng */}
-          {ads && ads.length > 0 && (() => {
-            const currentAd = ads[activeAdIndex];
-            const hasImage = !!currentAd.image_url;
-            return (
-              <div 
-                onClick={() => handleAdClick(currentAd)}
-                className="mx-auto max-w-5xl mt-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-end"
-              >
-                {hasImage ? (
-                  <>
-                    <img 
-                      src={currentAd.image_url} 
-                      alt={currentAd.text} 
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
-                  </>
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
-                )}
-                
-                <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
-                  <div className="text-white space-y-1.5 max-w-[70%] text-left">
-                    <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans">
-                      Đăng Ký & Ưu Đãi
-                    </span>
-                    <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2 font-sans">
-                      {currentAd.text}
-                    </h3>
-                  </div>
-                  {currentAd.link_url && (
-                    <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0 font-sans">
-                      Xem ngay
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
           <Footer />
         </div>
       );
@@ -793,8 +799,9 @@ export default function ClientUI() {
     return (
       <div className="mx-auto max-w-5xl space-y-5 animate-fade-in">
         <div className="grid gap-6 lg:grid-cols-[400px_1fr] items-start">
-          {/* LEFT COLUMN: Phone & OTP login */}
-          <section className="baggo-surface rounded-2xl border border-brand-100 p-6 bg-white flex flex-col gap-6 shadow-[0_12px_30px_-4px_rgba(18,139,77,0.06)] transition-all duration-300 hover:shadow-[0_20px_40px_-4px_rgba(18,139,77,0.12)]">
+          {/* LEFT COLUMN: Phone & OTP login & Ad */}
+          <div className="space-y-5">
+            <section className="baggo-surface rounded-2xl border border-brand-100 p-6 bg-white flex flex-col gap-6 shadow-[0_12px_30px_-4px_rgba(18,139,77,0.06)] transition-all duration-300 hover:shadow-[0_20px_40px_-4px_rgba(18,139,77,0.12)]">
             <div className="space-y-5">
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-500 text-white shadow-md shadow-brand-600/10">
@@ -909,6 +916,51 @@ export default function ClientUI() {
             </div>
           </section>
 
+          {/* Ad Banner inside left column */}
+          {ads && ads.length > 0 && (() => {
+            const currentAd = ads[activeAdIndex];
+            const hasImage = !!currentAd.image_url;
+            return (
+              <div 
+                onClick={() => handleAdClick(currentAd)}
+                className="cursor-pointer relative overflow-hidden rounded-2xl h-48 sm:h-56 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-center justify-center bg-slate-950"
+              >
+                {hasImage ? (
+                  <>
+                    <div 
+                      className="absolute inset-0 bg-cover bg-center filter blur-3xl scale-125 opacity-50 select-none pointer-events-none" 
+                      style={{ backgroundImage: `url(${currentAd.image_url})` }} 
+                    />
+                    <div className="absolute inset-0 bg-slate-950/20" />
+                    <img 
+                      src={currentAd.image_url} 
+                      alt={currentAd.text} 
+                      className="relative z-10 h-full w-auto object-contain transition-transform duration-700 group-hover:scale-[1.01]" 
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
+                    <div className="relative z-10 w-full p-6 flex flex-col justify-end h-full text-left">
+                      <span className="inline-block self-start rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans mb-1.5">
+                        Đăng Ký & Ưu Đãi
+                      </span>
+                      <h3 className="text-sm font-black leading-snug drop-shadow-sm line-clamp-2 font-sans text-white">
+                        {currentAd.text}
+                      </h3>
+                      {currentAd.link_url && (
+                        <span className="mt-3 self-start rounded-lg bg-white px-3 py-1.5 text-[10px] font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 font-sans">
+                          Xem ngay
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+
           {/* RIGHT COLUMN: Map & Station Info */}
           <div className="space-y-5">
             {/* Station Map */}
@@ -956,46 +1008,6 @@ export default function ClientUI() {
           </div>
         </div>
 
-                {/* Banner quảng cáo chèn cho khách hàng */}
-        {ads && ads.length > 0 && (() => {
-          const currentAd = ads[activeAdIndex];
-          const hasImage = !!currentAd.image_url;
-          return (
-            <div 
-              onClick={() => handleAdClick(currentAd)}
-              className="mx-auto max-w-5xl mt-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-end"
-            >
-              {hasImage ? (
-                <>
-                  <img 
-                    src={currentAd.image_url} 
-                    alt={currentAd.text} 
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
-                </>
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
-              )}
-              
-              <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
-                <div className="text-white space-y-1.5 max-w-[70%] text-left">
-                  <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans">
-                    Đăng Ký & Ưu Đãi
-                  </span>
-                  <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2 font-sans">
-                    {currentAd.text}
-                  </h3>
-                </div>
-                {currentAd.link_url && (
-                  <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0 font-sans">
-                    Xem ngay
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })()}
         <Footer />
       </div>
     );
@@ -1348,36 +1360,41 @@ export default function ClientUI() {
         return (
           <div 
             onClick={() => handleAdClick(currentAd)}
-            className="mx-auto max-w-5xl mt-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-end"
+            className="mx-auto max-w-5xl mt-6 mb-6 cursor-pointer relative overflow-hidden rounded-2xl h-44 sm:h-56 md:h-64 lg:h-72 shadow-lg border border-slate-100 transition-all duration-300 hover:shadow-xl hover:scale-[1.005] group flex items-center justify-center bg-slate-950"
           >
             {hasImage ? (
               <>
+                <div 
+                  className="absolute inset-0 bg-cover bg-center filter blur-3xl scale-125 opacity-50 select-none pointer-events-none" 
+                  style={{ backgroundImage: `url(${currentAd.image_url})` }} 
+                />
+                <div className="absolute inset-0 bg-slate-950/20" />
                 <img 
                   src={currentAd.image_url} 
                   alt={currentAd.text} 
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  className="relative z-10 h-full w-auto object-contain transition-transform duration-700 group-hover:scale-[1.01]" 
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
               </>
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
+              <>
+                <div className="absolute inset-0 bg-gradient-to-tr from-brand-700 via-indigo-600 to-brand-500" />
+                <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6 self-end">
+                  <div className="text-white space-y-1.5 max-w-[70%] text-left">
+                    <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans">
+                      Đăng Ký & Ưu Đãi
+                    </span>
+                    <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2 font-sans">
+                      {currentAd.text}
+                    </h3>
+                  </div>
+                  {currentAd.link_url && (
+                    <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0 font-sans">
+                      Xem ngay
+                    </span>
+                  )}
+                </div>
+              </>
             )}
-            
-            <div className="relative z-10 w-full p-6 flex items-center justify-between gap-6">
-              <div className="text-white space-y-1.5 max-w-[70%] text-left">
-                <span className="inline-block rounded-full bg-brand-500/90 backdrop-blur-xs px-2.5 py-0.5 text-[10px] font-black uppercase tracking-widest text-white font-sans">
-                  Đăng Ký & Ưu Đãi
-                </span>
-                <h3 className="text-lg font-black leading-snug drop-shadow-sm line-clamp-2 font-sans">
-                  {currentAd.text}
-                </h3>
-              </div>
-              {currentAd.link_url && (
-                <span className="rounded-xl bg-white px-5 py-3 text-sm font-black text-brand-700 shadow-md hover:bg-brand-50 transition-all duration-200 hover:scale-105 shrink-0 font-sans">
-                  Xem ngay
-                </span>
-              )}
-            </div>
           </div>
         );
       })()}
