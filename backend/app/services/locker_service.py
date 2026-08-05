@@ -5,11 +5,19 @@ from app.services.locker_state import LOCKER_LED_BY_STATUS
 import json
 import asyncio
 
-MQTT_HOST = "localhost"
+import os
+
+MQTT_HOST = os.getenv("MQTT_BROKER", os.getenv("MQTT_HOST", "localhost"))
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+MQTT_USER = os.getenv("MQTT_USER", None)
+MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", None)
 
 def _publish(topic: str, payload: str = ""):
     try:
-        publish.single(topic, payload, hostname=MQTT_HOST)
+        auth = None
+        if MQTT_USER:
+            auth = {'username': MQTT_USER, 'password': MQTT_PASSWORD}
+        publish.single(topic, payload, hostname=MQTT_HOST, port=MQTT_PORT, auth=auth)
     except Exception as e:
         print(f"WARNING: MQTT publish failed for {topic}: {e}")
 

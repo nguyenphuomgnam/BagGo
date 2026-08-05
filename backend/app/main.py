@@ -46,5 +46,8 @@ app.include_router(access.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(remote.router, prefix="/api")
 
+import os
+
 if __name__ == "__main__":
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)

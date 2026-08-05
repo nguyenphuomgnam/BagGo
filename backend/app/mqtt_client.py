@@ -1,3 +1,4 @@
+import os
 import paho.mqtt.client as mqtt
 import json
 import asyncio
@@ -5,8 +6,10 @@ import threading
 from app.websocket_manager import manager
 from app.database import get_db
 
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883
+MQTT_BROKER = os.getenv("MQTT_BROKER", os.getenv("MQTT_HOST", "localhost"))
+MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+MQTT_USER = os.getenv("MQTT_USER", None)
+MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", None)
 
 def on_connect(client, userdata, flags, rc):
     print("MQTT Connected to broker")
@@ -42,13 +45,15 @@ def on_message(client, userdata, msg):
 
 def start_mqtt():
     client = mqtt.Client()
+    if MQTT_USER:
+        client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
     client.on_connect = on_connect
     client.on_message = on_message
     try:
         client.connect(MQTT_BROKER, MQTT_PORT, 60)
         thread = threading.Thread(target=client.loop_forever, daemon=True)
         thread.start()
-        print("MQTT Broker client loop started successfully.")
+        print(f"MQTT Broker client loop started successfully on {MQTT_BROKER}:{MQTT_PORT}.")
     except Exception as e:
         print(f"WARNING: Failed to connect to MQTT broker ({MQTT_BROKER}:{MQTT_PORT}). Running without MQTT support: {e}")
     return client
