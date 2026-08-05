@@ -1,6 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
 from pathlib import Path
 from app.database import init_db
 from app.mqtt_client import start_mqtt
@@ -10,8 +11,16 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
 
-app = FastAPI()
 BASE_DIR = Path(__file__).resolve().parents[1]
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize DB & MQTT on startup
+    init_db()
+    start_mqtt()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,11 +52,6 @@ if remote_dir.exists():
 uploads_dir = BASE_DIR / "static" / "uploads"
 uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
-
-@app.on_event("startup")
-async def startup():
-    init_db()
-    start_mqtt()
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
