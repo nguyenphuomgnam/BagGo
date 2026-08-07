@@ -104,3 +104,24 @@ thật nên thay bằng `setCACert(rootCa)` của broker để xác minh chứng
 
 Nếu ESP32 online nhưng điều khiển nhầm ngăn, kiểm tra `LOCKER_ID`. ID này phải
 trùng với ID ngăn tủ trên website.
+
+## 6. Hiệu chỉnh cảm biến cửa 74HC165
+
+Firmware gửi riêng `door_open` và `sensor_raw`; UI không còn dùng trạng thái
+relay để suy đoán cửa. Mặc định cảm biến nằm ở input bit 0 và mức HIGH nghĩa là
+cửa đóng:
+
+```cpp
+const int DOOR_SENSOR_BIT = 0;
+const bool DOOR_SENSOR_HIGH_IS_CLOSED = true;
+```
+
+Khi đóng/mở cửa, Serial Monitor phải hiện `DOOR -> CLOSED/OPEN` và giá trị
+`74HC165 raw`. Railway logs cũng nhận JSON có `door_open` và `sensor_raw`.
+
+- Nếu trạng thái luôn ngược: đổi `DOOR_SENSOR_HIGH_IS_CLOSED` thành `false`.
+- Nếu trạng thái không bao giờ đổi: cảm biến đang ở bit khác; thử đúng input
+  `DOOR_SENSOR_BIT` từ 0 đến 7 theo dây nối thực tế.
+- Nếu `sensor_raw` không thay đổi khi tác động cảm biến: cần kiểm tra dây cảm
+  biến, nguồn, chân `DATA_165`, `CLOCK_165` và `LATCH_165`; đây là lỗi tín hiệu
+  phần cứng chứ không phải MQTT/UI.

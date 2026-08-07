@@ -42,6 +42,7 @@ import {
   Cell,
 } from 'recharts';
 import { api, subscribeWs, API_BASE } from '../lib/api';
+import { isLockerDoorOpen } from '../lib/lockerHardware';
 import { getLockerStatusMeta } from '../lib/lockerStatus';
 import StationManager from './StationManager';
 
@@ -425,8 +426,13 @@ export default function AdminUI() {
   useEffect(() => {
     loadAll();
     if (!token) return undefined;
-    return subscribeWs(() => {
+    const unsubscribe = subscribeWs((event) => {
       api.getLockers().then(setLockers).catch(console.error);
+      try {
+        if (JSON.parse(event.data)?.type === 'locker_hardware') return;
+      } catch {
+        // Unknown messages still trigger the full dashboard refresh below.
+      }
       api.adminStats(token).then(setStats).catch(console.error);
       fetchRentals(rentalPage, rentalFilter, debouncedSearch, token);
       fetchLogs(logPage, token);
@@ -438,6 +444,13 @@ export default function AdminUI() {
         .catch(console.error);
       api.adminGetAds(token).then(setAds).catch(console.error);
     });
+    const hardwarePoll = window.setInterval(() => {
+      api.getLockers().then(setLockers).catch(console.error);
+    }, 2500);
+    return () => {
+      unsubscribe();
+      window.clearInterval(hardwarePoll);
+    };
   }, [token, activeRentalPage, rentalPage, rentalFilter, debouncedSearch, logPage]);
 
   useEffect(() => {
@@ -1127,7 +1140,7 @@ export default function AdminUI() {
                     />
                     {locker.unlocking ? (
                       <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
-                    ) : locker.locked === 0 ? (
+                    ) : isLockerDoorOpen(locker) ? (
                       <DoorOpen className="h-4 w-4 text-emerald-500" />
                     ) : (
                       <DoorClosed className="h-4 w-4 text-slate-400" />
@@ -1719,7 +1732,7 @@ export default function AdminUI() {
                     <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-2 py-0.5 font-bold text-amber-700">
                       <Loader2 className="h-3 w-3 animate-spin" /> Đang mở khóa...
                     </span>
-                  ) : selectedFreshLocker.locked === 0 ? (
+                  ) : isLockerDoorOpen(selectedFreshLocker) ? (
                     <span className="inline-flex items-center gap-1 rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 font-bold text-emerald-700">
                       <DoorOpen className="h-3 w-3" /> Cửa đang mở
                     </span>

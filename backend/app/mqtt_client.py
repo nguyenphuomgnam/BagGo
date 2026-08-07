@@ -140,14 +140,28 @@ def on_message(client, userdata, msg):
             data = json.loads(payload)
             locked = bool(data.get("locked"))
             unlocking = bool(data.get("unlocking"))
+            if "door_open" in data:
+                door_open = bool(data["door_open"])
+            else:
+                # Backward compatibility with firmware that only sent locked.
+                door_open = not locked
+            sensor_raw = data.get("sensor_raw")
+            if sensor_raw is not None:
+                sensor_raw = int(sensor_raw)
             conn.execute(
                 """
                 UPDATE lockers
-                SET locked = ?, unlocking = ?, hardware_online = 1,
+                SET locked = ?, unlocking = ?, door_open = ?, sensor_raw = ?, hardware_online = 1,
                     hardware_last_seen = CURRENT_TIMESTAMP
                 WHERE id = ?
                 """,
-                (1 if locked else 0, 1 if unlocking else 0, locker_id),
+                (
+                    1 if locked else 0,
+                    1 if unlocking else 0,
+                    1 if door_open else 0,
+                    sensor_raw,
+                    locker_id,
+                ),
             )
             conn.commit()
             _broadcast_hardware(
@@ -155,6 +169,8 @@ def on_message(client, userdata, msg):
                 online=True,
                 locked=locked,
                 unlocking=unlocking,
+                door_open=door_open,
+                sensor_raw=sensor_raw,
             )
             logger.info("Status from locker %s: %s", locker_id, payload)
         finally:

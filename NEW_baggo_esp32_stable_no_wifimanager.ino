@@ -30,11 +30,15 @@ const byte BIT_LED_RED  = 0x02;
 const byte BIT_LED_GRN  = 0x04;
 
 const bool RELAY_ACTIVE_HIGH = true;
-const int FEEDBACK_BIT = 0;
-const bool FEEDBACK_HIGH_IS_LOCKED = true;
+// Door/contact sensor connected through the 74HC165. If the UI reports the
+// opposite state, change DOOR_SENSOR_HIGH_IS_CLOSED to false. If it never
+// changes, update DOOR_SENSOR_BIT (0..7) to match the actual 74HC165 input.
+const int DOOR_SENSOR_BIT = 0;
+const bool DOOR_SENSOR_HIGH_IS_CLOSED = true;
 
 const unsigned long UNLOCK_TIME_MS     = 2000;
 const unsigned long SENSOR_INTERVAL_MS = 100;
+const unsigned long SENSOR_DEBOUNCE_MS = 150;
 const unsigned long STATUS_INTERVAL_MS = 1000;
 const unsigned long MQTT_RETRY_MS      = 3000;
 const unsigned long WIFI_RETRY_MS      = 5000;
@@ -67,11 +71,14 @@ byte outputState = 0;
 byte inputState = 0;
 
 bool lockFeedback = true;
+bool doorOpen = false;
+bool doorCandidateOpen = false;
 bool isUnlocking = false;
 
 unsigned long unlockStartTime = 0;
 unsigned long lastUnlockCommand = 0;
 unsigned long lastSensorRead = 0;
+unsigned long doorCandidateSince = 0;
 unsigned long lastStatusPublish = 0;
 unsigned long lastMqttAttempt = 0;
 unsigned long lastWifiAttempt = 0;
@@ -86,6 +93,8 @@ bool blinkActive = false;
 bool blinkPhase = false;
 unsigned long blinkUntil = 0;
 unsigned long lastBlinkToggle = 0;
+
+void publishStatus();
 
 String buildMqttTopic(const String& suffix) {
   String prefix = String(MQTT_TOPIC_PREFIX);
@@ -142,8 +151,25 @@ byte read165() {
 
 void updateSensor() {
   inputState = read165();
-  bool rawFeedback = (inputState & (1 << FEEDBACK_BIT)) != 0;
-  lockFeedback = FEEDBACK_HIGH_IS_LOCKED ? rawFeedback : !rawFeedback;
+  bool rawDoorHigh = (inputState & (1 << DOOR_SENSOR_BIT)) != 0;
+  bool sampledDoorOpen = DOOR_SENSOR_HIGH_IS_CLOSED ? !rawDoorHigh : rawDoorHigh;
+  unsigned long now = millis();
+
+  if (sampledDoorOpen != doorCandidateOpen) {
+    doorCandidateOpen = sampledDoorOpen;
+    doorCandidateSince = now;
+  }
+
+  if (doorCandidateOpen != doorOpen && now - doorCandidateSince >= SENSOR_DEBOUNCE_MS) {
+    doorOpen = doorCandidateOpen;
+    // Backward-compatible value for older backends. The UI now uses door_open.
+    lockFeedback = !doorOpen;
+    Serial.print("DOOR -> ");
+    Serial.print(doorOpen ? "OPEN" : "CLOSED");
+    Serial.print(" | 74HC165 raw=0b");
+    Serial.println(inputState, BIN);
+    publishStatus();
+  }
 }
 
 // ============================================================
@@ -201,7 +227,11 @@ void publishStatus() {
 
   String json =
     "{\"locked\":" + String(lockFeedback ? "true" : "false") +
-    ",\"unlocking\":" + String(isUnlocking ? "true" : "false") + "}";
+    ",\"unlocking\":" + String(isUnlocking ? "true" : "false") +
+    ",\"door_open\":" + String(doorOpen ? "true" : "false") +
+    ",\"door_closed\":" + String(doorOpen ? "false" : "true") +
+    ",\"sensor_raw\":" + String(inputState) +
+    ",\"sensor_bit\":" + String(DOOR_SENSOR_BIT) + "}";
 
   mqttClient.publish(topicStatus.c_str(), json.c_str(), true);
   Serial.print("STATUS -> ");

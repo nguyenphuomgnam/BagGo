@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { api, subscribeWs } from '../lib/api';
 import { getLockerStatusMeta } from '../lib/lockerStatus';
+import { isLockerDoorOpen } from '../lib/lockerHardware';
 import PaymentQrModal from './PaymentQrModal';
 
 function money(value) {
@@ -125,8 +126,10 @@ export default function KioskUI() {
     loadConfig();
     loadAds();
     const unsubscribe = subscribeWs(() => loadLockers());
+    const hardwarePoll = window.setInterval(loadLockers, 2000);
     return () => {
       unsubscribe();
+      window.clearInterval(hardwarePoll);
       stopCamera();
     };
   }, []);
@@ -523,7 +526,7 @@ export default function KioskUI() {
                   <div className="text-lg font-extrabold">{locker.name}</div>
                   {locker.unlocking ? (
                     <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
-                  ) : locker.locked === 0 ? (
+                  ) : isLockerDoorOpen(locker) ? (
                     <DoorOpen className="h-5 w-5 text-emerald-500" />
                   ) : (
                     <DoorClosed className="h-5 w-5 text-slate-400" />
@@ -605,7 +608,7 @@ export default function KioskUI() {
                   <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-2 py-0.5 font-bold text-amber-700">
                     <Loader2 className="h-3 w-3 animate-spin" /> Đang mở...
                   </span>
-                ) : selectedLocker.locked === 0 ? (
+                ) : isLockerDoorOpen(selectedLocker) ? (
                   <span className="inline-flex items-center gap-1 rounded bg-emerald-50 border border-emerald-200 px-2 py-0.5 font-bold text-emerald-700">
                     <DoorOpen className="h-3 w-3" /> Cửa đang mở
                   </span>

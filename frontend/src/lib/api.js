@@ -102,17 +102,25 @@ export function makeWs() {
 export function subscribeWs(onMessage) {
   let ws = null;
   let cancelled = false;
+  let reconnectTimer = null;
 
-  const timer = window.setTimeout(() => {
+  function connect() {
     if (cancelled) return;
     ws = makeWs();
     ws.onmessage = onMessage;
     ws.onerror = () => {};
-  }, 50);
+    ws.onclose = () => {
+      if (!cancelled) {
+        reconnectTimer = window.setTimeout(connect, 1500);
+      }
+    };
+  }
+
+  reconnectTimer = window.setTimeout(connect, 50);
 
   return () => {
     cancelled = true;
-    window.clearTimeout(timer);
+    window.clearTimeout(reconnectTimer);
     if (ws && ws.readyState < WebSocket.CLOSING) {
       ws.close();
     }
