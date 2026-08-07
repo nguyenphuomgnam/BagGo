@@ -12,17 +12,16 @@ RUN npm run build
 FROM python:3.10-slim
 WORKDIR /app
 
-# Install OpenCV & system dependencies
+# Install runtime dependencies for the FastAPI backend. OpenCV uses the
+# headless wheel, so no X11/OpenGL packages are required in production.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libgl1 \
+    ca-certificates \
     libglib2.0-0 \
-    libsm6 \
-    libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && python -c "import cv2, os; cascade = os.path.join(cv2.data.haarcascades, 'haarcascade_frontalface_default.xml'); assert hasattr(cv2, 'CascadeClassifier'), 'OpenCV is missing CascadeClassifier'; assert os.path.isfile(cascade), f'Missing Haar cascade: {cascade}'; assert not cv2.CascadeClassifier(cascade).empty(), f'Cannot load Haar cascade: {cascade}'; print('OpenCV', cv2.__version__, 'face detector OK')"
 
 COPY backend/ ./
 

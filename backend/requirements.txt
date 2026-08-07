@@ -1,6 +1,9 @@
 fastapi
 uvicorn[standard]
-paho-mqtt
+paho-mqtt==2.1.0
 python-multipart
-opencv-python
+# Use the server/headless wheel and pin the native dependency pair so Railway
+# cannot resolve an incompatible or incomplete cv2 build on a later deploy.
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
 aiosqlite

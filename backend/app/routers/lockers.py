@@ -2,8 +2,14 @@ from fastapi import APIRouter
 from app.database import get_db
 from app.services.locker_state import decorate_locker_row
 from app.services.rental_service import expire_pending_reservations, sync_overtime_sessions
+from app.mqtt_client import get_mqtt_status
 
 router = APIRouter()
+
+@router.get("/mqtt/status")
+def mqtt_status():
+    """Connection diagnostics without exposing MQTT credentials."""
+    return get_mqtt_status()
 
 @router.get("/lockers")
 def get_lockers():

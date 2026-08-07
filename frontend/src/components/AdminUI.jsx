@@ -574,10 +574,14 @@ export default function AdminUI() {
     if (!pendingAction || !selectedFreshLocker) return;
     setLoading(true);
     try {
-      if (pendingAction.type === 'open') await api.adminOpen(token, selectedFreshLocker.id);
-      if (pendingAction.type === 'close') await api.adminClose(token, selectedFreshLocker.id);
+      let result = null;
+      if (pendingAction.type === 'open') result = await api.adminOpen(token, selectedFreshLocker.id);
+      if (pendingAction.type === 'close') result = await api.adminClose(token, selectedFreshLocker.id);
       if (pendingAction.type === 'force') await api.adminForceReturn(token, selectedFreshLocker.id);
       if (pendingAction.type === 'remove') await api.deleteLocker(token, selectedFreshLocker.id);
+      if (result?.mqtt_published === false) {
+        throw new Error('Backend chưa kết nối MQTT broker. Lệnh chưa được gửi tới ESP32.');
+      }
       setPendingAction(null);
       if (pendingAction.type === 'remove') {
         setSelectedLocker(null);
@@ -1116,13 +1120,19 @@ export default function AdminUI() {
               >
                 <div className="flex items-start justify-between gap-2 w-full">
                   <div className="text-lg font-extrabold text-slate-800">{locker.name}</div>
-                  {locker.unlocking ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
-                  ) : locker.locked === 0 ? (
-                    <DoorOpen className="h-4 w-4 text-emerald-500" />
-                  ) : (
-                    <DoorClosed className="h-4 w-4 text-slate-400" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    <span
+                      title={locker.hardware_online ? 'ESP32 online' : 'ESP32 offline'}
+                      className={`h-2.5 w-2.5 rounded-full ${locker.hardware_online ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                    />
+                    {locker.unlocking ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                    ) : locker.locked === 0 ? (
+                      <DoorOpen className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <DoorClosed className="h-4 w-4 text-slate-400" />
+                    )}
+                  </div>
                 </div>
                 <div className="mt-4">
                   <Badge status={locker.reservation_stage || locker.status} label={locker.status_label} hint={locker.status_hint} />
@@ -1693,6 +1703,17 @@ export default function AdminUI() {
                   }).hint}
                 </div>
                 <div className="mt-4 pt-3 border-t border-brand-100/50 flex items-center justify-between text-xs">
+                  <span className="font-extrabold text-slate-400 uppercase">ESP32 / MQTT:</span>
+                  <span className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 font-bold ${
+                    selectedFreshLocker.hardware_online
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                      : 'bg-rose-50 border-rose-200 text-rose-700'
+                  }`}>
+                    <span className={`h-2 w-2 rounded-full ${selectedFreshLocker.hardware_online ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                    {selectedFreshLocker.hardware_online ? 'Online' : 'Offline'}
+                  </span>
+                </div>
+                <div className="mt-3 pt-3 border-t border-brand-100/50 flex items-center justify-between text-xs">
                   <span className="font-extrabold text-slate-400 uppercase">Cửa vật lý (IoT):</span>
                   {selectedFreshLocker.unlocking ? (
                     <span className="inline-flex items-center gap-1 rounded bg-amber-50 border border-amber-200 px-2 py-0.5 font-bold text-amber-700">

@@ -191,10 +191,12 @@ def admin_open(locker_id: int = 1, _: bool = Depends(require_admin)):
     if locker is None:
         raise HTTPException(404, "Không tìm thấy ngăn")
 
+    mqtt_published = open_locker(locker_id)
+    if not mqtt_published:
+        raise HTTPException(503, "MQTT broker chưa kết nối; lệnh mở chưa được gửi tới ESP32")
     update_locker_status(locker_id, "ADMIN_INTERVENTION")
-    open_locker(locker_id)
     log_action(locker_id, "admin", "ADMIN_OPEN", "Admin mở khóa khẩn cấp")
-    return {"status": "admin_open", "locker_id": locker_id}
+    return {"status": "admin_open", "locker_id": locker_id, "mqtt_published": mqtt_published}
 
 
 @router.post("/admin/close")
@@ -209,10 +211,17 @@ def admin_close(locker_id: int = 1, _: bool = Depends(require_admin)):
     restored_status = rental["status"] if rental else "AVAILABLE"
     conn.close()
 
-    close_locker(locker_id)
+    mqtt_published = close_locker(locker_id)
+    if not mqtt_published:
+        raise HTTPException(503, "MQTT broker chưa kết nối; lệnh đóng chưa được gửi tới ESP32")
     update_locker_status(locker_id, restored_status)
     log_action(locker_id, "admin", "ADMIN_CLOSE", f"Admin đóng khóa, trạng thái trả về {restored_status}")
-    return {"status": "admin_close", "locker_id": locker_id, "locker_status": restored_status}
+    return {
+        "status": "admin_close",
+        "locker_id": locker_id,
+        "locker_status": restored_status,
+        "mqtt_published": mqtt_published,
+    }
 
 
 @router.post("/admin/force-return")
@@ -637,4 +646,3 @@ async def upload_ad_image(file: UploadFile = File(...), _: bool = Depends(requir
         raise HTTPException(500, f"Không thể lưu file: {str(e)}")
         
     return {"url": f"/uploads/{filename}"}
-

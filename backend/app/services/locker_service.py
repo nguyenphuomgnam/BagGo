@@ -1,25 +1,14 @@
-import paho.mqtt.publish as publish
-from app.database import get_db
-from app.websocket_manager import manager
-from app.services.locker_state import LOCKER_LED_BY_STATUS
 import json
-import asyncio
 
-import os
+from app.database import get_db
+from app.mqtt_client import publish_message
+from app.services.locker_state import LOCKER_LED_BY_STATUS
+from app.websocket_manager import manager
 
-MQTT_HOST = os.getenv("MQTT_BROKER", os.getenv("MQTT_HOST", "localhost"))
-MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
-MQTT_USER = os.getenv("MQTT_USER", None)
-MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", None)
 
-def _publish(topic: str, payload: str = ""):
-    try:
-        auth = None
-        if MQTT_USER:
-            auth = {'username': MQTT_USER, 'password': MQTT_PASSWORD}
-        publish.single(topic, payload, hostname=MQTT_HOST, port=MQTT_PORT, auth=auth)
-    except Exception as e:
-        print(f"WARNING: MQTT publish failed for {topic}: {e}")
+def _publish(topic: str, payload: str = "") -> bool:
+    return publish_message(topic, payload, qos=1)
+
 
 def update_locker_status(locker_id: int, new_status: str):
     conn = get_db()
@@ -39,11 +28,14 @@ def update_locker_status(locker_id: int, new_status: str):
         "status": new_status
     }))
 
-def open_locker(locker_id: int):
-    _publish(f"locker/{locker_id}/open", "")
 
-def close_locker(locker_id: int):
-    _publish(f"locker/{locker_id}/close", "")
+def open_locker(locker_id: int) -> bool:
+    return _publish(f"locker/{locker_id}/open", "OPEN")
 
-def blink_locker(locker_id: int):
-    _publish(f"locker/{locker_id}/led", "BLINK_BOTH")
+
+def close_locker(locker_id: int) -> bool:
+    return _publish(f"locker/{locker_id}/close", "CLOSE")
+
+
+def blink_locker(locker_id: int) -> bool:
+    return _publish(f"locker/{locker_id}/led", "BLINK_BOTH")

@@ -29,6 +29,8 @@ async def remote_identify(file: UploadFile = File(...)):
 
 @router.post("/remote/blink/{locker_id}")
 def remote_blink(locker_id: int):
-    blink_locker(locker_id)
+    mqtt_published = blink_locker(locker_id)
+    if not mqtt_published:
+        raise HTTPException(503, "MQTT broker chưa kết nối; không thể gửi lệnh nháy LED")
     log_action(locker_id, "customer", "BLINK_LED", "Nháy LED tìm tủ")
-    return {"status": "blinking"}
+    return {"status": "blinking", "mqtt_published": True}

@@ -4,7 +4,7 @@ from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from pathlib import Path
 from app.database import init_db
-from app.mqtt_client import start_mqtt
+from app.mqtt_client import start_mqtt, stop_mqtt
 from app.websocket_manager import manager
 from app.routers import lockers, access, admin, remote
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +19,7 @@ async def lifespan(app: FastAPI):
     init_db()
     start_mqtt()
     yield
+    stop_mqtt()
 
 app = FastAPI(lifespan=lifespan)
 

@@ -106,6 +106,11 @@ def init_db():
     _ensure_column(conn, "lockers", "is_active", "INTEGER DEFAULT 1")
     _ensure_column(conn, "lockers", "locked", "INTEGER DEFAULT 1")
     _ensure_column(conn, "lockers", "unlocking", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "lockers", "hardware_online", "INTEGER DEFAULT 0")
+    _ensure_column(conn, "lockers", "hardware_last_seen", "TIMESTAMP")
+    # Do not show stale online state while the backend is restarting. A retained
+    # MQTT online/status message will set the connected devices back to online.
+    conn.execute("UPDATE lockers SET hardware_online = 0")
     _ensure_column(conn, "rentals", "phone", "TEXT")
     _ensure_column(conn, "rentals", "access_code", "TEXT")
     _ensure_column(conn, "rentals", "otp_code", "TEXT")
