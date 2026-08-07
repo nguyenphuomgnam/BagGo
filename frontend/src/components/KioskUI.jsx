@@ -326,13 +326,19 @@ export default function KioskUI() {
     }
   }
 
-  async function confirmPayment() {
+  async function confirmPayment(data) {
     setLoading(true);
     try {
-      const data = await api.paymentCallback(rental.rental_id);
       setRental((current) => ({ ...current, ...data, payment_status: 'PAID' }));
       setStep('success');
-      setMessage({ type: 'success', text: 'Thanh toán thành công. Tủ đã nhận lệnh mở.' });
+      setMessage({
+        type: data?.mqtt_published === false ? 'error' : 'success',
+        text: data?.already_confirmed
+          ? 'Phiên đã được thanh toán giả lập trước đó; hệ thống không gửi lặp lệnh mở khóa.'
+          : data?.mqtt_published === false
+          ? 'Thanh toán giả lập đã thành công nhưng ESP32 đang offline. Hãy kiểm tra MQTT hoặc mở từ trang Admin.'
+          : 'Thanh toán giả lập thành công. Tủ đã nhận lệnh mở.',
+      });
       loadLockers();
     } catch (err) {
       setMessage({ type: 'error', text: err.message });
@@ -783,6 +789,7 @@ export default function KioskUI() {
                     rentalId={rental?.rental_id}
                     lockerName={selectedLocker?.name || `Ngăn ${rental?.locker_id}`}
                     stationName={selectedLocker?.station_name || config.station_name}
+                    paymentType="overtime"
                   />
                 </div>
               )}

@@ -269,13 +269,34 @@ async def upload_face(rental_id: int, file: UploadFile = File(...)):
 
 @router.post("/payment/callback")
 def payment_callback(rental_id: int):
+    """Confirm the demo payment once and safely handle repeated callbacks."""
     expire_pending_reservations()
     sync_overtime_sessions()
     conn = get_db()
     rental = conn.execute("SELECT * FROM rentals WHERE id = ?", (rental_id,)).fetchone()
-    if rental is None or rental["status"] != "RESERVED":
+    if rental is None:
         conn.close()
-        raise HTTPException(400, "Giao dịch không hợp lệ")
+        raise HTTPException(404, "Không tìm thấy phiên thanh toán")
+
+    if rental["status"] in ("OCCUPIED", "OVERTIME") and rental["payment_status"] == "PAID":
+        locker_id = rental["locker_id"]
+        conn.close()
+        return {
+            "status": "ok",
+            "payment_mode": "mock",
+            "already_confirmed": True,
+            "mqtt_published": None,
+            "rental_id": rental_id,
+            "locker_id": locker_id,
+        }
+
+    if rental["status"] == "CANCELLED" or rental["payment_status"] == "CANCELLED":
+        conn.close()
+        raise HTTPException(409, "Phiên giữ chỗ đã hết hạn hoặc đã bị hủy. Vui lòng tạo phiên mới.")
+
+    if rental["status"] != "RESERVED" or rental["payment_status"] != "PENDING":
+        conn.close()
+        raise HTTPException(409, f"Không thể thanh toán phiên đang ở trạng thái {rental['status']}")
 
     locker_id = rental["locker_id"]
     conn.execute(
@@ -290,9 +311,16 @@ def payment_callback(rental_id: int):
     conn.close()
 
     update_locker_status(locker_id, "OCCUPIED")
-    open_locker(locker_id)
-    log_action(locker_id, "payment", "PAYMENT_PAID", f"Thanh toán thành công phiên #{rental_id}")
-    return {"status": "ok", "rental_id": rental_id, "locker_id": locker_id}
+    mqtt_published = open_locker(locker_id)
+    log_action(locker_id, "payment_mock", "PAYMENT_PAID", f"Xác nhận thanh toán giả lập phiên #{rental_id}")
+    return {
+        "status": "ok",
+        "payment_mode": "mock",
+        "already_confirmed": False,
+        "mqtt_published": mqtt_published,
+        "rental_id": rental_id,
+        "locker_id": locker_id,
+    }
 
 
 @router.post("/identify")
@@ -541,6 +569,4 @@ def record_ad_click(ad_id: int):
     conn.commit()
     conn.close()
     return {"status": "ok"}
-
-
 

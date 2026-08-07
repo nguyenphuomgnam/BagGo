@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader2, X, CheckCircle2, ReceiptText, ShieldCheck } from 'lucide-react';
 import { api } from '../lib/api';
 
@@ -16,6 +16,17 @@ export default function PaymentQrModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [paymentResult, setPaymentResult] = useState(null);
+  const successTimerRef = useRef(null);
+
+  useEffect(() => {
+    window.clearTimeout(successTimerRef.current);
+    setLoading(false);
+    setError('');
+    setSuccess(false);
+    setPaymentResult(null);
+    return () => window.clearTimeout(successTimerRef.current);
+  }, [isOpen, rentalId, paymentType]);
 
   if (!isOpen) return null;
 
@@ -27,15 +38,19 @@ export default function PaymentQrModal({
     setLoading(true);
     setError('');
     try {
+      let result;
       if (paymentType === 'extend') {
-        await api.customerExtend(token, rentalId, 1);
+        result = await api.customerExtend(token, rentalId, 1);
+      } else if (paymentType === 'checkin') {
+        result = await api.paymentCallback(rentalId);
       } else {
-        await api.paymentCallback(rentalId);
+        result = { status: 'ok', payment_mode: 'mock', payment_type: paymentType };
       }
+      setPaymentResult(result);
       setSuccess(true);
-      setTimeout(() => {
+      successTimerRef.current = window.setTimeout(() => {
         setSuccess(false);
-        onPaymentSuccess(rentalId);
+        onPaymentSuccess(result);
       }, 1500);
     } catch (err) {
       setError(err.message || 'Thanh toán thất bại, vui lòng thử lại.');
@@ -53,7 +68,11 @@ export default function PaymentQrModal({
           <div className="flex items-center gap-2">
             <ReceiptText className="h-5 w-5 text-brand-600" />
             <h3 className="text-lg font-extrabold text-slate-800">
-              {paymentType === 'extend' ? 'Thanh toán Gia hạn tủ' : 'Thanh toán Check-in'}
+              {paymentType === 'extend'
+                ? 'Thanh toán Gia hạn tủ'
+                : paymentType === 'overtime'
+                  ? 'Thanh toán phí quá hạn'
+                  : 'Thanh toán Check-in'}
             </h3>
           </div>
           <button 
@@ -73,7 +92,13 @@ export default function PaymentQrModal({
             <p className="text-sm font-semibold text-slate-500">
               {paymentType === 'extend'
                 ? `Ngăn ${lockerName} đã được gia hạn thêm 1 giờ thành công.`
-                : `Hệ thống đang mở khóa ngăn ${lockerName}...`}
+                : paymentType === 'checkin' && paymentResult?.already_confirmed
+                  ? `Phiên này đã được xác nhận thanh toán trước đó; hệ thống không gửi lặp lệnh mở ngăn ${lockerName}.`
+                  : paymentType === 'checkin' && paymentResult?.mqtt_published === false
+                  ? `Đã xác nhận thanh toán giả lập, nhưng ESP32 đang offline nên chưa nhận được lệnh mở ngăn ${lockerName}.`
+                  : paymentType === 'checkin'
+                    ? `Hệ thống đang mở khóa ngăn ${lockerName}...`
+                    : `Đã xác nhận khoản phí giả lập cho ngăn ${lockerName}.`}
             </p>
           </div>
         ) : (
